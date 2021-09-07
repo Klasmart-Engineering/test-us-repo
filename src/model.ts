@@ -84,12 +84,23 @@ export class Model {
             const connection = await createConnection({
                 name: 'default',
                 type: 'postgres',
-                url:
-                    process.env.DATABASE_URL ||
-                    'postgres://postgres:kidsloop@localhost',
                 synchronize: true,
                 logging: Boolean(process.env.DATABASE_LOGGING),
                 entities: ['src/entities/*.ts'],
+                replication: {
+                    master: {
+                        url:
+                            process.env.DATABASE_URL ||
+                            'postgres://postgres:kidsloop@localhost',
+                    },
+                    slaves: process.env.RO_DATABASE_URL
+                        ? [
+                              {
+                                  url: process.env.RO_DATABASE_URL,
+                              },
+                          ]
+                        : [],
+                },
             })
             const model = new Model(connection)
             await getManager(connection.name).query(
