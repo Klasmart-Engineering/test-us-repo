@@ -1,5 +1,4 @@
 import {
-    BaseEntity,
     Column,
     Entity,
     getManager,
@@ -21,9 +20,10 @@ import { AgeRange } from './ageRange'
 import { Grade } from './grade'
 import { School } from './school'
 import { Class } from './class'
+import { AcademicProfileEntity } from './academicProfile'
 
 @Entity()
-export class Program extends BaseEntity {
+export class Program extends AcademicProfileEntity {
     @PrimaryGeneratedColumn('uuid')
     public id!: string
 
@@ -178,6 +178,22 @@ export class Program extends BaseEntity {
         return await Subject.find({
             where: { id: In(ids) },
         })
+    }
+
+    public async share(org: Organization) {
+        await super.share(org)
+
+        const subjects = (await this.subjects) || []
+        const grades = (await this.grades) || []
+        const age_ranges = (await this.age_ranges) || []
+
+        await Promise.all(
+            [subjects, grades, age_ranges].map(
+                (children: AcademicProfileEntity[]) => {
+                    return Promise.all(children.map((c) => c.share(org)))
+                }
+            )
+        )
     }
 
     public async delete(

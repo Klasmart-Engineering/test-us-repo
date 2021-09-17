@@ -1,5 +1,4 @@
 import {
-    BaseEntity,
     Check,
     Column,
     Entity,
@@ -16,6 +15,7 @@ import { GraphQLResolveInfo } from 'graphql'
 import { Organization } from './organization'
 import { PermissionName } from '../permissions/permissionNames'
 import { Status } from './status'
+import { AcademicProfileEntity } from './academicProfile'
 
 @Entity()
 @Check(`"low_value" >= 0 AND "low_value" <= 99`)
@@ -27,7 +27,7 @@ import { Status } from './status'
     'high_value_unit',
     'organization',
 ])
-export class AgeRange extends BaseEntity {
+export class AgeRange extends AcademicProfileEntity {
     @PrimaryGeneratedColumn('uuid')
     public id!: string
 

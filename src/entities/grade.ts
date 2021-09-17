@@ -1,5 +1,4 @@
 import {
-    BaseEntity,
     Column,
     Entity,
     getManager,
@@ -14,9 +13,10 @@ import { GraphQLResolveInfo } from 'graphql'
 import { Organization } from './organization'
 import { PermissionName } from '../permissions/permissionNames'
 import { Status } from './status'
+import { AcademicProfileEntity } from './academicProfile'
 
 @Entity()
-export class Grade extends BaseEntity {
+export class Grade extends AcademicProfileEntity {
     @PrimaryGeneratedColumn('uuid')
     public id!: string
 

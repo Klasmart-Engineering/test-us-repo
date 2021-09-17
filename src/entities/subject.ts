@@ -1,5 +1,4 @@
 import {
-    BaseEntity,
     Column,
     Entity,
     getManager,
@@ -19,9 +18,10 @@ import { PermissionName } from '../permissions/permissionNames'
 import { Subcategory } from './subcategory'
 import { Status } from './status'
 import { Class } from './class'
+import { AcademicProfileEntity } from './academicProfile'
 
 @Entity()
-export class Subject extends BaseEntity {
+export class Subject extends AcademicProfileEntity {
     @PrimaryGeneratedColumn('uuid')
     public id!: string
 
@@ -73,6 +73,12 @@ export class Subject extends BaseEntity {
 
     @Column({ type: 'timestamp', nullable: true })
     public deleted_at?: Date
+
+    public async share(org: Organization) {
+        await super.share(org)
+        const categories = (await this.categories) || []
+        return Promise.all(categories.map((c) => c.share(org)))
+    }
 
     public async delete(
         args: Record<string, unknown>,

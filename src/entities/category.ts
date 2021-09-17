@@ -1,5 +1,4 @@
 import {
-    BaseEntity,
     Column,
     Entity,
     getManager,
@@ -18,9 +17,10 @@ import { Organization } from './organization'
 import { PermissionName } from '../permissions/permissionNames'
 import { Subcategory } from './subcategory'
 import { Status } from './status'
+import { AcademicProfileEntity } from './academicProfile'
 
 @Entity()
-export class Category extends BaseEntity {
+export class Category extends AcademicProfileEntity {
     @PrimaryGeneratedColumn('uuid')
     public id!: string
 
@@ -85,6 +85,12 @@ export class Category extends BaseEntity {
         return await Subcategory.find({
             where: { id: In(ids) },
         })
+    }
+
+    public async share(org: Organization) {
+        await super.share(org)
+        const subcategories = (await this.subcategories) || []
+        return Promise.all(subcategories.map((s) => s.share(org)))
     }
 
     public async delete(
