@@ -257,10 +257,11 @@ export class IsAdminDirective extends SchemaDirectiveVisitor {
         context: Context
     ) {
         scope
+            .leftJoin('AgeRange.shared_with', 'SharedOrg')
             .leftJoinAndSelect(
                 OrganizationMembership,
                 'OrganizationMembership',
-                'OrganizationMembership.organization = AgeRange.organization'
+                'OrganizationMembership.organization = AgeRange.organization OR OrganizationMembership.organization = SharedOrg.organization_id'
             )
             .where(
                 '(OrganizationMembership.user_id = :d_user_id OR AgeRange.system = :system)',
@@ -276,10 +277,11 @@ export class IsAdminDirective extends SchemaDirectiveVisitor {
         context: Context
     ) {
         scope
+            .leftJoin('Grade.shared_with', 'SharedOrg')
             .leftJoinAndSelect(
                 OrganizationMembership,
                 'OrganizationMembership',
-                'OrganizationMembership.organization = Grade.organization'
+                'OrganizationMembership.organization = Grade.organization OR OrganizationMembership.organization = SharedOrg.organization_id'
             )
             .where(
                 '(OrganizationMembership.user_id = :d_user_id OR Grade.system = :system)',
@@ -295,10 +297,11 @@ export class IsAdminDirective extends SchemaDirectiveVisitor {
         context: Context
     ) {
         scope
+            .leftJoin('Category.shared_with', 'SharedOrg')
             .leftJoinAndSelect(
                 OrganizationMembership,
                 'OrganizationMembership',
-                'OrganizationMembership.organization = Category.organization'
+                'OrganizationMembership.organization = Category.organization OR OrganizationMembership.organization = SharedOrg.organization_id'
             )
             .where(
                 '(OrganizationMembership.user_id = :d_user_id OR Category.system = :system)',
@@ -314,10 +317,11 @@ export class IsAdminDirective extends SchemaDirectiveVisitor {
         context: Context
     ) {
         scope
+            .leftJoin('Subcategory.shared_with', 'SharedOrg')
             .leftJoinAndSelect(
                 OrganizationMembership,
                 'OrganizationMembership',
-                'OrganizationMembership.organization = Subcategory.organization'
+                'OrganizationMembership.organization = Subcategory.organization OR OrganizationMembership.organization = SharedOrg.organization_id'
             )
             .where(
                 '(OrganizationMembership.user_id = :d_user_id OR Subcategory.system = :system)',
@@ -333,10 +337,11 @@ export class IsAdminDirective extends SchemaDirectiveVisitor {
         context: Context
     ) {
         scope
+            .leftJoin('Subject.shared_with', 'SharedOrg')
             .leftJoinAndSelect(
                 OrganizationMembership,
                 'OrganizationMembership',
-                'OrganizationMembership.organization = Subject.organization'
+                'OrganizationMembership.organization = Subject.organization OR OrganizationMembership.organization = SharedOrg.organization_id'
             )
             .where(
                 '(OrganizationMembership.user_id = :d_user_id OR Subject.system = :system)',
@@ -352,10 +357,11 @@ export class IsAdminDirective extends SchemaDirectiveVisitor {
         context: Context
     ) {
         scope
+            .leftJoin('Program.shared_with', 'SharedOrg')
             .leftJoinAndSelect(
                 OrganizationMembership,
                 'OrganizationMembership',
-                'OrganizationMembership.organization = Program.organization'
+                'OrganizationMembership.organization = Program.organization OR OrganizationMembership.organization = SharedOrg.organization_id'
             )
             .where(
                 '(OrganizationMembership.user_id = :d_user_id OR Program.system = :system)',
