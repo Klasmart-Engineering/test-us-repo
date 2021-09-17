@@ -188,10 +188,12 @@ export class Program extends AcademicProfileEntity {
         const age_ranges = (await this.age_ranges) || []
 
         await Promise.all(
-            [subjects, grades, age_ranges].map(
-                (children: AcademicProfileEntity[]) => {
-                    return Promise.all(children.map((c) => c.share(org)))
-                }
+            [
+                subjects,
+                grades,
+                age_ranges,
+            ].map((children: AcademicProfileEntity[]) =>
+                Promise.all(children.map((c) => c.share(org)))
             )
         )
     }
