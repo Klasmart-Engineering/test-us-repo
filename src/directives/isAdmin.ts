@@ -82,22 +82,22 @@ export class IsAdminDirective extends SchemaDirectiveVisitor {
                         )
                         break
                     case 'ageRange':
-                        this.nonAdminAgeRangeScope(scope, context)
+                        await this.nonAdminAgeRangeScope(scope, context)
                         break
                     case 'grade':
-                        this.nonAdminGradeScope(scope, context)
+                        await this.nonAdminGradeScope(scope, context)
                         break
                     case 'category':
-                        this.nonAdminCategoryScope(scope, context)
+                        await this.nonAdminCategoryScope(scope, context)
                         break
                     case 'subcategory':
-                        this.nonAdminSubcategoryScope(scope, context)
+                        await this.nonAdminSubcategoryScope(scope, context)
                         break
                     case 'subject':
-                        this.nonAdminSubjectScope(scope, context)
+                        await this.nonAdminSubjectScope(scope, context)
                         break
                     case 'program':
-                        this.nonAdminProgamScope(scope, context)
+                        await this.nonAdminProgamScope(scope, context)
                         break
                     case 'class':
                         await this.nonAdminClassScope(scope, context)
@@ -256,120 +256,58 @@ export class IsAdminDirective extends SchemaDirectiveVisitor {
         scope: SelectQueryBuilder<unknown>,
         context: Context
     ) {
-        scope
-            .leftJoin('AgeRange.shared_with', 'SharedOrg')
-            .leftJoinAndSelect(
-                OrganizationMembership,
-                'OrganizationMembership',
-                'OrganizationMembership.organization = AgeRange.organization OR OrganizationMembership.organization = SharedOrg.organization_id'
-            )
-            .where(
-                '(OrganizationMembership.user_id = :d_user_id OR AgeRange.system = :system)',
-                {
-                    d_user_id: context.permissions.getUserId(),
-                    system: true,
-                }
-            )
+        return this.academicProfile(scope, context, 'AgeRange', 'ageRangeId', [
+            PermissionName.view_age_range_20112,
+        ])
     }
 
     private nonAdminGradeScope(
         scope: SelectQueryBuilder<unknown>,
         context: Context
     ) {
-        scope
-            .leftJoin('Grade.shared_with', 'SharedOrg')
-            .leftJoinAndSelect(
-                OrganizationMembership,
-                'OrganizationMembership',
-                'OrganizationMembership.organization = Grade.organization OR OrganizationMembership.organization = SharedOrg.organization_id'
-            )
-            .where(
-                '(OrganizationMembership.user_id = :d_user_id OR Grade.system = :system)',
-                {
-                    d_user_id: context.permissions.getUserId(),
-                    system: true,
-                }
-            )
+        return this.academicProfile(scope, context, 'Grade', 'gradeId', [
+            PermissionName.view_grades_20113,
+        ])
     }
 
     private nonAdminCategoryScope(
         scope: SelectQueryBuilder<unknown>,
         context: Context
     ) {
-        scope
-            .leftJoin('Category.shared_with', 'SharedOrg')
-            .leftJoinAndSelect(
-                OrganizationMembership,
-                'OrganizationMembership',
-                'OrganizationMembership.organization = Category.organization OR OrganizationMembership.organization = SharedOrg.organization_id'
-            )
-            .where(
-                '(OrganizationMembership.user_id = :d_user_id OR Category.system = :system)',
-                {
-                    d_user_id: context.permissions.getUserId(),
-                    system: true,
-                }
-            )
+        return this.academicProfile(scope, context, 'Category', 'categoryId', [
+            PermissionName.view_program_20111,
+        ])
     }
 
     private nonAdminSubcategoryScope(
         scope: SelectQueryBuilder<unknown>,
         context: Context
     ) {
-        scope
-            .leftJoin('Subcategory.shared_with', 'SharedOrg')
-            .leftJoinAndSelect(
-                OrganizationMembership,
-                'OrganizationMembership',
-                'OrganizationMembership.organization = Subcategory.organization OR OrganizationMembership.organization = SharedOrg.organization_id'
-            )
-            .where(
-                '(OrganizationMembership.user_id = :d_user_id OR Subcategory.system = :system)',
-                {
-                    d_user_id: context.permissions.getUserId(),
-                    system: true,
-                }
-            )
+        return this.academicProfile(
+            scope,
+            context,
+            'Subcategory',
+            'subcategoryId',
+            [PermissionName.view_program_20111]
+        )
     }
 
-    private nonAdminSubjectScope(
+    private async nonAdminSubjectScope(
         scope: SelectQueryBuilder<unknown>,
         context: Context
     ) {
-        scope
-            .leftJoin('Subject.shared_with', 'SharedOrg')
-            .leftJoinAndSelect(
-                OrganizationMembership,
-                'OrganizationMembership',
-                'OrganizationMembership.organization = Subject.organization OR OrganizationMembership.organization = SharedOrg.organization_id'
-            )
-            .where(
-                '(OrganizationMembership.user_id = :d_user_id OR Subject.system = :system)',
-                {
-                    d_user_id: context.permissions.getUserId(),
-                    system: true,
-                }
-            )
+        return this.academicProfile(scope, context, 'Subject', 'subjectId', [
+            PermissionName.view_subjects_20115,
+        ])
     }
 
-    private nonAdminProgamScope(
+    private async nonAdminProgamScope(
         scope: SelectQueryBuilder<unknown>,
         context: Context
     ) {
-        scope
-            .leftJoin('Program.shared_with', 'SharedOrg')
-            .leftJoinAndSelect(
-                OrganizationMembership,
-                'OrganizationMembership',
-                'OrganizationMembership.organization = Program.organization OR OrganizationMembership.organization = SharedOrg.organization_id'
-            )
-            .where(
-                '(OrganizationMembership.user_id = :d_user_id OR Program.system = :system)',
-                {
-                    d_user_id: context.permissions.getUserId(),
-                    system: true,
-                }
-            )
+        return this.academicProfile(scope, context, 'Program', 'programId', [
+            PermissionName.view_program_20111,
+        ])
     }
 
     private async nonAdminSchoolScope(
@@ -500,5 +438,34 @@ export class IsAdminDirective extends SchemaDirectiveVisitor {
         }
 
         scope.where('false')
+    }
+
+    private async academicProfile(
+        scope: SelectQueryBuilder<unknown>,
+        context: Context,
+        entity: string,
+        primaryKey: string,
+        requiredPermissions: PermissionName[]
+    ) {
+        const orgIds = await context.permissions.orgMembershipsWithPermissions(
+            requiredPermissions
+        )
+        if (orgIds.length === 0) {
+            scope.where(`${entity}.system = :system`, { system: true })
+            return
+        }
+
+        const table = scope.expressionMap.mainAlias?.tablePath
+
+        scope
+            .leftJoin(
+                `${table}_shared_with_organization`,
+                'SharedOrg',
+                `SharedOrg.${primaryKey} = id`
+            )
+            .where(
+                `(${entity}.organization IN (:...orgIds) OR "SharedOrg"."organizationOrganizationId" IN (:...orgIds))`,
+                { orgIds }
+            )
     }
 }
