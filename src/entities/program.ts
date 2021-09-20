@@ -7,7 +7,6 @@ import {
     JoinTable,
     ManyToMany,
     ManyToOne,
-    PrimaryGeneratedColumn,
     EntityManager,
 } from 'typeorm'
 import { Status } from './status'
@@ -24,15 +23,6 @@ import { AcademicProfileEntity } from './academicProfile'
 
 @Entity()
 export class Program extends AcademicProfileEntity {
-    @PrimaryGeneratedColumn('uuid')
-    public id!: string
-
-    @Column({ nullable: false })
-    public name?: string
-
-    @Column({ nullable: false, default: false })
-    public system?: boolean
-
     @Column({ type: 'enum', enum: Status, default: Status.ACTIVE })
     public status!: Status
 

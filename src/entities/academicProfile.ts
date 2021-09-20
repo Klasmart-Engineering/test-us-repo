@@ -1,9 +1,24 @@
-import { BaseEntity, ManyToMany, JoinTable } from 'typeorm'
+import {
+    BaseEntity,
+    ManyToMany,
+    JoinTable,
+    PrimaryGeneratedColumn,
+    Column,
+} from 'typeorm'
 
 // Import the type only to prevent a circular dependency
 import type { Organization } from './organization'
 
 export abstract class AcademicProfileEntity extends BaseEntity {
+    @PrimaryGeneratedColumn('uuid')
+    public id!: string
+
+    @Column({ nullable: false })
+    public name?: string
+
+    @Column({ nullable: false, default: false })
+    public system?: boolean
+
     // Reference by name instead of class to prevent a circular dependency
     // https://github.com/typeorm/typeorm/issues/4190
     @ManyToMany('Organization')

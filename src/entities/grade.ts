@@ -4,7 +4,6 @@ import {
     getManager,
     JoinColumn,
     ManyToOne,
-    PrimaryGeneratedColumn,
     EntityManager,
 } from 'typeorm'
 
@@ -17,15 +16,6 @@ import { AcademicProfileEntity } from './academicProfile'
 
 @Entity()
 export class Grade extends AcademicProfileEntity {
-    @PrimaryGeneratedColumn('uuid')
-    public id!: string
-
-    @Column({ nullable: false })
-    public name?: string
-
-    @Column({ nullable: false, default: false })
-    public system?: boolean
-
     @ManyToOne(() => Grade, (grade) => grade.id)
     @JoinColumn({ name: 'progress_from_grade_id' })
     public progress_from_grade?: Promise<Grade>

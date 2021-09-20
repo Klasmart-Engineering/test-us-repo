@@ -5,7 +5,6 @@ import {
     getManager,
     JoinColumn,
     ManyToOne,
-    PrimaryGeneratedColumn,
     Unique,
     EntityManager,
 } from 'typeorm'
@@ -28,12 +27,6 @@ import { AcademicProfileEntity } from './academicProfile'
     'organization',
 ])
 export class AgeRange extends AcademicProfileEntity {
-    @PrimaryGeneratedColumn('uuid')
-    public id!: string
-
-    @Column({ nullable: false })
-    public name?: string
-
     @Column({ nullable: false })
     public high_value!: number
 
@@ -45,9 +38,6 @@ export class AgeRange extends AcademicProfileEntity {
 
     @Column({ type: 'enum', enum: AgeRangeUnit, nullable: false })
     public low_value_unit!: AgeRangeUnit
-
-    @Column({ nullable: false, default: false })
-    public system?: boolean
 
     @ManyToOne(() => Organization, (organization) => organization.ageRanges)
     @JoinColumn({ name: 'organization_id' })
