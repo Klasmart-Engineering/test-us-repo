@@ -1,8 +1,12 @@
 import { BaseEntity, ManyToMany, JoinTable } from 'typeorm'
-import { Organization } from './organization'
+
+// Import the type only to prevent a circular dependency
+import type { Organization } from './organization'
 
 export abstract class AcademicProfileEntity extends BaseEntity {
-    @ManyToMany(() => Organization)
+    // Reference by name instead of class to prevent a circular dependency
+    // https://github.com/typeorm/typeorm/issues/4190
+    @ManyToMany('Organization')
     @JoinTable()
     public shared_with?: Promise<Organization[]>
 
