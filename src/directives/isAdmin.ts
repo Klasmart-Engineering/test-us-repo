@@ -450,8 +450,8 @@ export class IsAdminDirective extends SchemaDirectiveVisitor {
         const orgIds = await context.permissions.orgMembershipsWithPermissions(
             requiredPermissions
         )
+        scope.where(`${entity}.system = :system`, { system: true })
         if (orgIds.length === 0) {
-            scope.where(`${entity}.system = :system`, { system: true })
             return
         }
 
@@ -461,9 +461,9 @@ export class IsAdminDirective extends SchemaDirectiveVisitor {
             .leftJoin(
                 `${table}_shared_with_organization`,
                 'SharedOrg',
-                `SharedOrg.${primaryKey} = id`
+                `SharedOrg.${primaryKey} = ${entity}.id`
             )
-            .where(
+            .orWhere(
                 `(${entity}.organization IN (:...orgIds) OR "SharedOrg"."organizationOrganizationId" IN (:...orgIds))`,
                 { orgIds }
             )
