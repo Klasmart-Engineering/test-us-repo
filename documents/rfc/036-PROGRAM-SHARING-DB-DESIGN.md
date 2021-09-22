@@ -48,10 +48,10 @@ export class Category extends AcademicProfileEntity {
 `isAdmin` directives can be updated to now include shared orgs. 
 
 - This implementation inadvertently introduces view permission enforcement, which was not done previously. 
-   - Tests will therefore break and need to be updated.
+    - Tests will therefore break and need to be updated.
 - Although we're now doing more work in the isAdmin directive by querying `orgMembershipsWithPermissions(),` it may beneficial overall:
-   - That may be queried further down the call stack anyways, at which point it will be cached in memory
-   - The entity>shared orgs table is likely to be much smaller than `OrganizationMembership`, so the join would be less expensive
+    - That may be queried further down the call stack anyways, at which point it will be cached in memory
+    - The entity>shared orgs table is likely to be much smaller than `OrganizationMembership`, so the join would be less expensive
 
 
 
