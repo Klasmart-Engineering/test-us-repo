@@ -252,6 +252,15 @@ export class IsAdminDirective extends SchemaDirectiveVisitor {
             })
     }
 
+    private async nonAdminProgamScope(
+        scope: SelectQueryBuilder<unknown>,
+        context: Context
+    ) {
+        return this.academicProfile(scope, context, 'Program', 'programId', [
+            PermissionName.view_program_20111,
+        ])
+    }
+
     private nonAdminAgeRangeScope(
         scope: SelectQueryBuilder<unknown>,
         context: Context
@@ -270,12 +279,21 @@ export class IsAdminDirective extends SchemaDirectiveVisitor {
         ])
     }
 
+    private async nonAdminSubjectScope(
+        scope: SelectQueryBuilder<unknown>,
+        context: Context
+    ) {
+        return this.academicProfile(scope, context, 'Subject', 'subjectId', [
+            PermissionName.view_subjects_20115,
+        ])
+    }
+
     private nonAdminCategoryScope(
         scope: SelectQueryBuilder<unknown>,
         context: Context
     ) {
         return this.academicProfile(scope, context, 'Category', 'categoryId', [
-            PermissionName.view_program_20111,
+            PermissionName.view_subjects_20115,
         ])
     }
 
@@ -288,26 +306,8 @@ export class IsAdminDirective extends SchemaDirectiveVisitor {
             context,
             'Subcategory',
             'subcategoryId',
-            [PermissionName.view_program_20111]
+            [PermissionName.view_subjects_20115]
         )
-    }
-
-    private async nonAdminSubjectScope(
-        scope: SelectQueryBuilder<unknown>,
-        context: Context
-    ) {
-        return this.academicProfile(scope, context, 'Subject', 'subjectId', [
-            PermissionName.view_subjects_20115,
-        ])
-    }
-
-    private async nonAdminProgamScope(
-        scope: SelectQueryBuilder<unknown>,
-        context: Context
-    ) {
-        return this.academicProfile(scope, context, 'Program', 'programId', [
-            PermissionName.view_program_20111,
-        ])
     }
 
     private async nonAdminSchoolScope(
@@ -450,7 +450,8 @@ export class IsAdminDirective extends SchemaDirectiveVisitor {
         const orgIds = await context.permissions.orgMembershipsWithPermissions(
             requiredPermissions
         )
-        scope.where(`${entity}.system = :system`, { system: true })
+
+        scope.orWhere(`${entity}.system = :system`, { system: true })
         if (orgIds.length === 0) {
             return
         }
