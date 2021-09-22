@@ -81,9 +81,9 @@ private nonAdminCategoryScope(
 
 
 ## Appendix
-[Custom Program Sharing Epic](https://calmisland.atlassian.net/browse/UD-520)
-[Proof of concept](https://bitbucket.org/calmisland/kidsloop-user-service/pull-requests/446)
-[Original RFC](https://calmisland.atlassian.net/wiki/spaces/ATZ/pages/2213642540/RFC-023+Custom+Program+Sharing)
+- [Custom Program Sharing Epic](https://calmisland.atlassian.net/browse/UD-520)
+- [Proof of concept](https://bitbucket.org/calmisland/kidsloop-user-service/pull-requests/446)
+- [Original RFC](https://calmisland.atlassian.net/wiki/spaces/ATZ/pages/2213642540/RFC-023+Custom+Program+Sharing)
 
 ## Decision
 
