@@ -7,10 +7,7 @@ import {
     ApolloServerTestClient,
     createTestClient,
 } from '../../utils/createTestClient'
-import {
-    addUserToOrganizationAndValidate,
-    createRole,
-} from '../../utils/operations/organizationOps'
+import { addUserToOrganizationAndValidate } from '../../utils/operations/organizationOps'
 import { addRoleToOrganizationMembership } from '../../utils/operations/organizationMembershipOps'
 import { getNonAdminAuthToken, getAdminAuthToken } from '../../utils/testConfig'
 import { createGrade } from '../../factories/grade.factory'
@@ -27,6 +24,7 @@ import { PermissionName } from '../../../src/permissions/permissionNames'
 import { Status } from '../../../src/entities/status'
 import { User } from '../../../src/entities/user'
 import { AuthenticationError } from 'apollo-server-express'
+import { createRole } from '../../factories/role.factory'
 
 use(chaiAsPromised)
 
@@ -109,13 +107,10 @@ describe('Grade', () => {
                                 organizationId,
                                 { authorization: getAdminAuthToken() }
                             )
-                            roleId = (
-                                await createRole(
-                                    testClient,
-                                    organizationId,
-                                    'My Role'
-                                )
-                            ).role_id
+                            const role = await createRole('my role', org, {
+                                permissions: [PermissionName.view_grades_20113],
+                            }).save()
+                            roleId = role.role_id
                             await addRoleToOrganizationMembership(
                                 testClient,
                                 otherUserId,

@@ -57,6 +57,12 @@ import {
 } from '../utils/operations/renameDuplicateGrades'
 import { convertDataToCursor } from '../../src/utils/pagination/paginate'
 import deepEqualInAnyOrder from 'deep-equal-in-any-order'
+import { createRole } from '../factories/role.factory'
+import { PermissionName } from '../../src/permissions/permissionNames'
+import {
+    addRolesToOrganizationMembership,
+    addRoleToOrganizationMembership,
+} from '../utils/operations/organizationMembershipOps'
 
 use(chaiAsPromised)
 use(deepEqualInAnyOrder)
@@ -256,7 +262,7 @@ describe('model', () => {
     describe('getAgeRange', () => {
         let user: User
         let ageRange: AgeRange
-        let organizationId: string
+        let organization: Organization
 
         const ageRangeInfo = (ageRange: AgeRange) => {
             return {
@@ -272,11 +278,9 @@ describe('model', () => {
 
         beforeEach(async () => {
             user = await createAdminUser(testClient)
-            const org = createOrganization(user)
-            await connection.manager.save(org)
-            organizationId = org.organization_id
-            ageRange = createAgeRange(org)
-            await connection.manager.save(ageRange)
+            const org = await createOrganization(user).save()
+            organization = org
+            ageRange = await createAgeRange(org).save()
         })
 
         context('when user is not logged in', () => {
@@ -308,22 +312,51 @@ describe('model', () => {
                             await addUserToOrganizationAndValidate(
                                 testClient,
                                 otherUserId,
-                                organizationId,
+                                organization.organization_id,
                                 { authorization: getAdminAuthToken() }
                             )
                         })
+                        context('and has view permissions', () => {
+                            beforeEach(async () => {
+                                const role = await createRole(
+                                    'my role',
+                                    organization,
+                                    {
+                                        permissions: [
+                                            PermissionName.view_age_range_20112,
+                                        ],
+                                    }
+                                ).save()
+                                await addRoleToOrganizationMembership(
+                                    testClient,
+                                    otherUserId,
+                                    organization.organization_id,
+                                    role.role_id
+                                )
+                            })
+                            it('returns the expected age range', async () => {
+                                const gqlAgeRange = await getAgeRange(
+                                    testClient,
+                                    ageRange.id,
+                                    { authorization: getNonAdminAuthToken() }
+                                )
 
-                        it('returns the expected age range', async () => {
-                            const gqlAgeRange = await getAgeRange(
-                                testClient,
-                                ageRange.id,
-                                { authorization: getNonAdminAuthToken() }
-                            )
+                                expect(gqlAgeRange).not.to.be.null
+                                expect(ageRangeInfo(gqlAgeRange)).to.deep.eq(
+                                    ageRangeInfo(ageRange)
+                                )
+                            })
+                        })
+                        context('and does not have view permissions', () => {
+                            it('returns no age range', async () => {
+                                const gqlAgeRange = await getAgeRange(
+                                    testClient,
+                                    ageRange.id,
+                                    { authorization: getNonAdminAuthToken() }
+                                )
 
-                            expect(gqlAgeRange).not.to.be.null
-                            expect(ageRangeInfo(gqlAgeRange)).to.deep.eq(
-                                ageRangeInfo(ageRange)
-                            )
+                                expect(gqlAgeRange).to.be.null
+                            })
                         })
                     }
                 )
@@ -352,7 +385,7 @@ describe('model', () => {
                             await addUserToOrganizationAndValidate(
                                 testClient,
                                 user.user_id,
-                                organizationId,
+                                organization.organization_id,
                                 { authorization: getAdminAuthToken() }
                             )
                         })
@@ -461,17 +494,49 @@ describe('model', () => {
                                 { authorization: getAdminAuthToken() }
                             )
                         })
+                        context('and has view permissions', () => {
+                            beforeEach(async () => {
+                                const role = await createRole(
+                                    'my role',
+                                    organization,
+                                    {
+                                        permissions: [
+                                            PermissionName.view_grades_20113,
+                                        ],
+                                    }
+                                ).save()
+                                await addRoleToOrganizationMembership(
+                                    testClient,
+                                    userId,
+                                    organization.organization_id,
+                                    role.role_id
+                                )
+                            })
 
-                        it('returns the expected grade', async () => {
-                            const gqlGrade = await getGrade(
-                                testClient,
-                                grade.id,
-                                { authorization: getNonAdminAuthToken() }
-                            )
+                            it('returns the expected grade', async () => {
+                                const gqlGrade = await getGrade(
+                                    testClient,
+                                    grade.id,
+                                    { authorization: getNonAdminAuthToken() }
+                                )
 
-                            expect(gqlGrade).not.to.be.null
-                            const gqlGradeDetails = await gradeInfo(gqlGrade)
-                            expect(gqlGradeDetails).to.deep.eq(gradeDetails)
+                                expect(gqlGrade).not.to.be.null
+                                const gqlGradeDetails = await gradeInfo(
+                                    gqlGrade
+                                )
+                                expect(gqlGradeDetails).to.deep.eq(gradeDetails)
+                            })
+                        })
+                        context('and does not have view permissions', () => {
+                            it('returns no grade', async () => {
+                                const gqlGrade = await getGrade(
+                                    testClient,
+                                    grade.id,
+                                    { authorization: getNonAdminAuthToken() }
+                                )
+
+                                expect(gqlGrade).to.be.null
+                            })
                         })
                     }
                 )
@@ -542,7 +607,7 @@ describe('model', () => {
     describe('getSubcategory', () => {
         let user: User
         let subcategory: Subcategory
-        let organizationId: string
+        let organization: Organization
 
         const subcategoryInfo = (subcategory: Subcategory) => {
             return {
@@ -556,7 +621,7 @@ describe('model', () => {
             user = await createAdminUser(testClient)
             const org = createOrganization(user)
             await connection.manager.save(org)
-            organizationId = org.organization_id
+            organization = org
             subcategory = createSubcategory(org)
             await connection.manager.save(subcategory)
         })
@@ -592,22 +657,51 @@ describe('model', () => {
                             await addUserToOrganizationAndValidate(
                                 testClient,
                                 otherUserId,
-                                organizationId,
+                                organization.organization_id,
                                 { authorization: getAdminAuthToken() }
                             )
                         })
+                        context('and has view permissions', () => {
+                            beforeEach(async () => {
+                                const role = await createRole(
+                                    'my role',
+                                    organization,
+                                    {
+                                        permissions: [
+                                            PermissionName.view_subjects_20115,
+                                        ],
+                                    }
+                                ).save()
+                                await addRoleToOrganizationMembership(
+                                    testClient,
+                                    otherUserId,
+                                    organization.organization_id,
+                                    role.role_id
+                                )
+                            })
+                            it('returns the expected subcategory', async () => {
+                                const gqlSubcategory = await getSubcategory(
+                                    testClient,
+                                    subcategory.id,
+                                    { authorization: getNonAdminAuthToken() }
+                                )
 
-                        it('returns the expected subcategory', async () => {
-                            const gqlSubcategory = await getSubcategory(
-                                testClient,
-                                subcategory.id,
-                                { authorization: getNonAdminAuthToken() }
-                            )
+                                expect(gqlSubcategory).not.to.be.null
+                                expect(
+                                    subcategoryInfo(gqlSubcategory)
+                                ).to.deep.eq(subcategoryInfo(subcategory))
+                            })
+                        })
+                        context('and does not have view permissions', () => {
+                            it('returns no subcategory', async () => {
+                                const gqlSubcategory = await getSubcategory(
+                                    testClient,
+                                    subcategory.id,
+                                    { authorization: getNonAdminAuthToken() }
+                                )
 
-                            expect(gqlSubcategory).not.to.be.null
-                            expect(subcategoryInfo(gqlSubcategory)).to.deep.eq(
-                                subcategoryInfo(subcategory)
-                            )
+                                expect(gqlSubcategory).to.be.null
+                            })
                         })
                     }
                 )
@@ -636,7 +730,7 @@ describe('model', () => {
                             await addUserToOrganizationAndValidate(
                                 testClient,
                                 user.user_id,
-                                organizationId,
+                                organization.organization_id,
                                 { authorization: getAdminAuthToken() }
                             )
                         })
@@ -679,7 +773,7 @@ describe('model', () => {
     describe('getProgram', () => {
         let user: User
         let program: Program
-        let organizationId: string
+        let organization: Organization
 
         const programInfo = (program: Program) => {
             return {
@@ -693,7 +787,7 @@ describe('model', () => {
             user = await createAdminUser(testClient)
             const org = createOrganization(user)
             await connection.manager.save(org)
-            organizationId = org.organization_id
+            organization = org
             program = createProgram(org)
             await connection.manager.save(program)
         })
@@ -727,22 +821,54 @@ describe('model', () => {
                             await addUserToOrganizationAndValidate(
                                 testClient,
                                 otherUserId,
-                                organizationId,
+                                organization.organization_id,
                                 { authorization: getAdminAuthToken() }
                             )
                         })
+                        context('and has view permissions', () => {
+                            beforeEach(async () => {
+                                const role = await createRole(
+                                    'my role',
+                                    organization,
+                                    {
+                                        permissions: [
+                                            PermissionName.view_program_20111,
+                                        ],
+                                    }
+                                ).save()
+                                await addRoleToOrganizationMembership(
+                                    testClient,
+                                    otherUserId,
+                                    organization.organization_id,
+                                    role.role_id
+                                )
 
-                        it('returns the expected program', async () => {
-                            const gqlProgram = await getProgram(
-                                testClient,
-                                program.id,
-                                { authorization: getNonAdminAuthToken() }
-                            )
+                                it('returns the expected program', async () => {
+                                    const gqlProgram = await getProgram(
+                                        testClient,
+                                        program.id,
+                                        {
+                                            authorization: getNonAdminAuthToken(),
+                                        }
+                                    )
 
-                            expect(gqlProgram).not.to.be.null
-                            expect(programInfo(gqlProgram)).to.deep.eq(
-                                programInfo(program)
-                            )
+                                    expect(gqlProgram).not.to.be.null
+                                    expect(programInfo(gqlProgram)).to.deep.eq(
+                                        programInfo(program)
+                                    )
+                                })
+                            })
+                        })
+                        context('and does not have view permissions', () => {
+                            it('returns no program', async () => {
+                                const gqlProgram = await getProgram(
+                                    testClient,
+                                    program.id,
+                                    { authorization: getNonAdminAuthToken() }
+                                )
+
+                                expect(gqlProgram).to.be.null
+                            })
                         })
                     }
                 )
@@ -771,7 +897,7 @@ describe('model', () => {
                             await addUserToOrganizationAndValidate(
                                 testClient,
                                 user.user_id,
-                                organizationId,
+                                organization.organization_id,
                                 { authorization: getAdminAuthToken() }
                             )
                         })

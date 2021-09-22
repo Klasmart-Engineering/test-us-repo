@@ -1099,6 +1099,12 @@ describe('user', () => {
                         grantPermission(
                             testClient,
                             role.role_id,
+                            PermissionName.view_subjects_20115,
+                            { authorization: getAdminAuthToken() }
+                        )
+                        grantPermission(
+                            testClient,
+                            role.role_id,
                             'edit_subjects_20337',
                             { authorization: getAdminAuthToken() }
                         )

@@ -7,10 +7,7 @@ import {
     ApolloServerTestClient,
     createTestClient,
 } from '../../utils/createTestClient'
-import {
-    addUserToOrganizationAndValidate,
-    createRole,
-} from '../../utils/operations/organizationOps'
+import { addUserToOrganizationAndValidate } from '../../utils/operations/organizationOps'
 import { addRoleToOrganizationMembership } from '../../utils/operations/organizationMembershipOps'
 import { getNonAdminAuthToken, getAdminAuthToken } from '../../utils/testConfig'
 import { createAgeRange } from '../../factories/ageRange.factory'
@@ -37,6 +34,8 @@ import { Subject } from '../../../src/entities/subject'
 import { Status } from '../../../src/entities/status'
 import { User } from '../../../src/entities/user'
 import { AuthenticationError } from 'apollo-server-express'
+import { createRole } from '../../factories/role.factory'
+import { Role } from '../../../src/entities/role'
 
 use(chaiAsPromised)
 
@@ -119,13 +118,12 @@ describe('program', () => {
                                 organizationId,
                                 { authorization: getAdminAuthToken() }
                             )
-                            roleId = (
-                                await createRole(
-                                    testClient,
-                                    organizationId,
-                                    'My Role'
-                                )
-                            ).role_id
+                            const role = await createRole('my role', org, {
+                                permissions: [
+                                    PermissionName.view_program_20111,
+                                ],
+                            }).save()
+                            roleId = role.role_id
                             await addRoleToOrganizationMembership(
                                 testClient,
                                 otherUserId,
@@ -501,7 +499,9 @@ describe('program', () => {
             let role: any
 
             beforeEach(async () => {
-                role = await createRole(testClient, org.organization_id)
+                role = await createRole('my role', org, {
+                    permissions: [PermissionName.view_program_20111],
+                }).save()
                 await addRoleToOrganizationMembership(
                     testClient,
                     otherUserId,
@@ -631,7 +631,9 @@ describe('program', () => {
             let role: any
 
             beforeEach(async () => {
-                role = await createRole(testClient, org.organization_id)
+                role = await createRole('my role', org, {
+                    permissions: [PermissionName.view_program_20111],
+                }).save()
                 await addRoleToOrganizationMembership(
                     testClient,
                     otherUserId,
@@ -755,7 +757,9 @@ describe('program', () => {
             let role: any
 
             beforeEach(async () => {
-                role = await createRole(testClient, org.organization_id)
+                role = await createRole('my role', org, {
+                    permissions: [PermissionName.view_program_20111],
+                }).save()
                 await addRoleToOrganizationMembership(
                     testClient,
                     otherUserId,

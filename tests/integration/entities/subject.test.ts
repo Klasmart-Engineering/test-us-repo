@@ -6,10 +6,7 @@ import {
     ApolloServerTestClient,
     createTestClient,
 } from '../../utils/createTestClient'
-import {
-    addUserToOrganizationAndValidate,
-    createRole,
-} from '../../utils/operations/organizationOps'
+import { addUserToOrganizationAndValidate } from '../../utils/operations/organizationOps'
 import { addRoleToOrganizationMembership } from '../../utils/operations/organizationMembershipOps'
 import { getNonAdminAuthToken, getAdminAuthToken } from '../../utils/testConfig'
 import { Category } from '../../../src/entities/category'
@@ -34,6 +31,7 @@ import { Subject } from '../../../src/entities/subject'
 import { Status } from '../../../src/entities/status'
 import { User } from '../../../src/entities/user'
 import { AuthenticationError } from 'apollo-server-express'
+import { createRole } from '../../factories/role.factory'
 
 use(chaiAsPromised)
 
@@ -110,10 +108,9 @@ describe('Subject', () => {
                 'and the user does not have view subject permissions',
                 () => {
                     beforeEach(async () => {
-                        const role = await createRole(
-                            testClient,
-                            organization.organization_id
-                        )
+                        const role = await createRole('my role', organization, {
+                            permissions: [],
+                        }).save()
                         await addRoleToOrganizationMembership(
                             testClient,
                             user.user_id,
@@ -127,23 +124,16 @@ describe('Subject', () => {
                             describeSubject(testClient, subject.id, {
                                 authorization: getNonAdminAuthToken(),
                             })
-                        ).to.be.rejected
+                        ).to.be.fulfilled.with.empty
                     })
                 }
             )
 
             context('and the user has all the permissions', () => {
                 beforeEach(async () => {
-                    const role = await createRole(
-                        testClient,
-                        organization.organization_id
-                    )
-                    await grantPermission(
-                        testClient,
-                        role.role_id,
-                        PermissionName.view_subjects_20115,
-                        { authorization: getAdminAuthToken() }
-                    )
+                    const role = await createRole('my role', organization, {
+                        permissions: [PermissionName.view_subjects_20115],
+                    }).save()
                     await addRoleToOrganizationMembership(
                         testClient,
                         user.user_id,
@@ -241,13 +231,12 @@ describe('Subject', () => {
                                 organizationId,
                                 { authorization: getAdminAuthToken() }
                             )
-                            roleId = (
-                                await createRole(
-                                    testClient,
-                                    organizationId,
-                                    'My Role'
-                                )
-                            ).role_id
+                            const role = await createRole('my role', org, {
+                                permissions: [
+                                    PermissionName.view_subjects_20115,
+                                ],
+                            }).save()
+                            roleId = role.role_id
                             await addRoleToOrganizationMembership(
                                 testClient,
                                 otherUserId,
