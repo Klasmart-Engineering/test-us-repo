@@ -22,26 +22,21 @@ export interface IChildConnectionDataloaderKey<
     readonly includeTotalCount: boolean
 }
 
-export const childConnectionLoader = async <
-    SourceEntity extends BaseEntity,
-    ConnectionNode
->(
-    items: readonly IChildConnectionDataloaderKey<SourceEntity>[],
+export const childConnectionLoader = async <Entity extends BaseEntity, Node>(
+    items: readonly IChildConnectionDataloaderKey<Entity>[],
     connectionQuery: (
-        args: IPaginationArgs<SourceEntity>
-    ) => Promise<SelectQueryBuilder<SourceEntity>>,
-    entityToNodeMapFunction: (
-        source: SourceEntity
-    ) => ConnectionNode | Promise<ConnectionNode>,
+        args: IPaginationArgs<Entity>
+    ) => Promise<SelectQueryBuilder<Entity>>,
+    entityToNodeMapFunction: (source: Entity) => Node | Promise<Node>,
     sort: ISortingConfig
-): Promise<IPaginatedResponse<ConnectionNode>[]> => {
+): Promise<IPaginatedResponse<Node>[]> => {
     if (items.length === 0) {
         return []
     }
     // extract query info that was added to each Dataloader key
     const parentIds = items.map((i) => i.parent.id)
 
-    const args = items[0]?.args as IChildPaginationArgs<SourceEntity>
+    const args = items[0]?.args as IChildPaginationArgs<Entity>
     const parent = items[0]?.parent
     const includeTotalCount = items[0]?.includeTotalCount
     const groupByProperty = parent.pivot
@@ -54,7 +49,7 @@ export const childConnectionLoader = async <
     }
 
     // Create the Dataloader map of parentId: childConnectionNode[]
-    const parentMap = new Map<string, IPaginatedResponse<ConnectionNode>>(
+    const parentMap = new Map<string, IPaginatedResponse<Node>>(
         parentIds.map((parentId) => [
             parentId,
             {
@@ -172,20 +167,20 @@ export const childConnectionLoader = async <
     const entities = await convertRawToEntities(childrenRaw, baseScope)
 
     // group by parentId by create a map of parentId:rawChildSqlRow
-    const parentToRawChildMap = new Map<string, unknown[]>(
+    const parentToChildMap = new Map<string, Entity[]>(
         parentIds.map((id) => [id, []])
     )
 
     childParentIds.forEach((parentId, index) => {
         const child = entities[index]
-        const children = parentToRawChildMap.get(parentId)
+        const children = parentToChildMap.get(parentId)
         children?.push(child)
-        parentToRawChildMap.set(parentId, children || [])
+        parentToChildMap.set(parentId, children || [])
     })
 
     // for each parent, calculate their edges and page info
-    for (const [parentId, children] of parentToRawChildMap) {
-        const { pageInfo, edges } = getPageInfoAndEdges(
+    for (const [parentId, children] of parentToChildMap) {
+        const { pageInfo, edges } = getPageInfoAndEdges<Entity>(
             children,
             pageSize,
             sort.primaryKey,
