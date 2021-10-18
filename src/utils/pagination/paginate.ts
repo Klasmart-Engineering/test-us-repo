@@ -126,13 +126,13 @@ export const adjustPageSize = (
     return newPageSize
 }
 
-export const getPageInfoAndEdges = (
-    data: unknown[],
+export const getPageInfoAndEdges = <T = unknown>(
+    data: T[],
     pageSize: number,
     defaultColumn: string,
     primaryColumns: string[],
-    totalCount?: number,
     cursorData?: unknown,
+    totalCount?: number,
     direction: Direction = 'FORWARD'
 ) => {
     const pageInfo = {
@@ -151,8 +151,7 @@ export const getPageInfoAndEdges = (
 
     const seekPageSize = adjustedPageSize + 1
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let edges: any[] = []
+    let edges: IEdge<T>[] = []
 
     if (direction === 'FORWARD') {
         edges = getEdges(data, defaultColumn, primaryColumns)
@@ -198,8 +197,6 @@ export const getPaginationQuery = async ({
     const cursorData = directionArgs?.cursor
         ? getDataFromCursor(directionArgs.cursor)
         : null
-
-    const totalCount = includeTotalCount ? await scope.getCount() : undefined
 
     const { order, primaryColumns, primaryKeyOrder } = addOrderByClause(
         scope,
@@ -261,7 +258,7 @@ export const getPaginationQuery = async ({
         }
     }
 
-    return { scope, primaryColumns, pageSize, cursorData, totalCount }
+    return { scope, primaryColumns, pageSize, cursorData }
 }
 
 export const paginateData = async <T = unknown>({
@@ -271,40 +268,37 @@ export const paginateData = async <T = unknown>({
     sort,
     includeTotalCount,
 }: IPaginateData): Promise<IPaginatedResponse<T>> => {
-    const {
-        pageSize,
-        cursorData,
-        totalCount,
-        primaryColumns,
-    } = await getPaginationQuery({
+    const { pageSize, cursorData, primaryColumns } = await getPaginationQuery({
         direction,
         directionArgs,
         scope,
         sort,
         includeTotalCount,
     })
-    let count = totalCount
-    if (direction === 'BACKWARD' && count === undefined) {
-        count = await scope.getCount()
+
+    let adjustedPageSize = pageSize
+    let totalCount
+    if (direction === 'BACKWARD') {
+        totalCount = await scope.getCount()
+        adjustedPageSize = adjustPageSize(
+            pageSize,
+            cursorData,
+            totalCount,
+            direction
+        )
     }
 
-    const adjustedPageSize = adjustPageSize(
-        pageSize,
-        cursorData,
-        count,
-        direction
-    )
     const seekPageSize = adjustedPageSize + 1
     scope.take(seekPageSize)
 
-    const data = await scope.getMany()
+    const data = (await scope.getMany()) as T[]
 
-    const { edges, pageInfo } = getPageInfoAndEdges(
+    const { edges, pageInfo } = getPageInfoAndEdges<T>(
         data,
         pageSize,
         sort.primaryKey,
         primaryColumns,
-        count,
+        undefined,
         cursorData,
         direction
     )
