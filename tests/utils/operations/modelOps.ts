@@ -704,6 +704,13 @@ export const ORGANIZATIONS_CONNECTION = `
                     }
                     usersConnection(direction: FORWARD) {
                         totalCount
+                        edges {
+                            node {
+                                organizations {
+                                    id
+                                }
+                            }
+                        }
                     }
                     schoolsConnection(direction: FORWARD) {
                         totalCount
