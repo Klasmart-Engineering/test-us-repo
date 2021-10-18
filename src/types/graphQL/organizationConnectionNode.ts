@@ -3,8 +3,8 @@ import { Branding } from '../../entities/branding'
 import { OrganizationContactInfo } from './organizationContactInfo'
 import { UserSummaryNode } from './userSummaryNode'
 import { IPaginatedResponse } from '../../utils/pagination/paginate'
-import { CoreUserConnectionNode } from '../../pagination/usersConnection'
 import { ISchoolsConnectionNode } from './schoolsConnectionNode'
+import { UserConnectionNode } from './userConnectionNode'
 
 export interface OrganizationConnectionNode {
     id: string
@@ -16,6 +16,6 @@ export interface OrganizationConnectionNode {
     owners: UserSummaryNode[]
     branding: Branding
 
-    usersConnection?: IPaginatedResponse<CoreUserConnectionNode>
+    usersConnection?: IPaginatedResponse<UserConnectionNode>
     schoolsConnection?: IPaginatedResponse<ISchoolsConnectionNode>
 }
