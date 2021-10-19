@@ -271,8 +271,8 @@ const typeDefs = gql`
         schoolsConnection(
             count: PageSize
             cursor: String
-            filter: UserFilter
-            sort: UserSortInput
+            filter: SchoolFilter
+            sort: SchoolSortInput
             direction: ConnectionDirection
         ): SchoolsConnectionResponse @isAdmin(entity: "school")
     }
@@ -369,16 +369,16 @@ export default function getDefault(
                     ctx.loaders.organizationsConnection = {
                         owners: new Dataloader((keys) => ownersForOrgs(keys)),
                     }
+                    // Add dataloaders for the usersConnection
+                    // TODO remove once corresponding child connections have been created
                     ctx.loaders.usersConnection = {
                         organizations: new Dataloader((keys) =>
-                            orgsForUsers(keys, args.filter)
+                            orgsForUsers(keys)
                         ),
                         schools: new Dataloader((keys) =>
-                            schoolsForUsers(keys, args.filter)
+                            schoolsForUsers(keys)
                         ),
-                        roles: new Dataloader((keys) =>
-                            rolesForUsers(keys, args.filter)
-                        ),
+                        roles: new Dataloader((keys) => rolesForUsers(keys)),
                     }
                     return model.organizationsConnection(ctx, info, args)
                 },
