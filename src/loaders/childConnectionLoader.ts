@@ -145,9 +145,11 @@ export const childConnectionLoader = async <Entity extends BaseEntity, Node>(
     // Select the parentId for grouping children
     paginationScope.addSelect(`${groupByProperty} as "parentId"`)
 
-    // Select the row number to select n children per parent, respecting the requested order
+    // Select the row number to select n _sorted_ children per parent,
+    // respecting the requested order
     const filterQuery = paginationScope.getQuery()
-    const orderBy = filterQuery.slice(filterQuery.indexOf('ORDER BY')) // TODO this better...
+    // TODO a better way of extracting the ORDER BY clause
+    const orderBy = filterQuery.slice(filterQuery.indexOf('ORDER BY'))
     paginationScope.addSelect(
         `ROW_NUMBER() OVER (PARTITION BY ${groupByProperty} ${orderBy})`,
         'row_num'
@@ -161,21 +163,21 @@ export const childConnectionLoader = async <Entity extends BaseEntity, Node>(
         .where(`"row_num" <= ${seekPageSize}`)
         .setParameters(paginationScope.getParameters())
 
+    // get raw SQL results and create a map of parentId:childEntity
     const childrenRaw = await childScope.getRawMany()
-
     const childParentIds = childrenRaw.map((c) => c.parentId)
     const entities = await convertRawToEntities(childrenRaw, baseScope)
-
-    // group by parentId by create a map of parentId:rawChildSqlRow
     const parentToChildMap = new Map<string, Entity[]>(
         parentIds.map((id) => [id, []])
     )
 
     childParentIds.forEach((parentId, index) => {
         const child = entities[index]
-        const children = parentToChildMap.get(parentId)
-        children?.push(child)
-        parentToChildMap.set(parentId, children || [])
+        if (child) {
+            const children = parentToChildMap.get(parentId)
+            children?.push(child)
+            parentToChildMap.set(parentId, children || [])
+        }
     })
 
     // for each parent, calculate their edges and page info
@@ -185,7 +187,7 @@ export const childConnectionLoader = async <Entity extends BaseEntity, Node>(
             pageSize,
             sort.primaryKey,
             primaryColumns,
-            parentMap.get(parentId)?.totalCount || 0,
+            parentMap.get(parentId)?.totalCount ?? 0,
             cursorData,
             args.direction
         )
