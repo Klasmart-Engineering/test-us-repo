@@ -237,5 +237,14 @@ describe('child connections', () => {
             )
             expect(result).to.have.lengthOf(0)
         })
+        it('handles duplicate keys', async () => {
+            const response = await childConnectionLoader(
+                getDataloaderKeys([orgs[0], orgs[0]], args),
+                usersConnectionQuery,
+                mapFunc,
+                sort
+            )
+            expect(response).to.have.lengthOf(2)
+        })
     })
 })

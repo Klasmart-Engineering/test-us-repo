@@ -33,8 +33,15 @@ export const childConnectionLoader = async <Entity extends BaseEntity, Node>(
     if (items.length === 0) {
         return []
     }
+    //
     // extract query info that was added to each Dataloader key
+    //
+
     const parentIds = items.map((i) => i.parent.id)
+    // there may be duplicate parentIds, so use a unique set to create maps,
+    // but use the full set to return an array of equal length to <items>
+    // as per the dataloader constraint
+    const uniqueParentIds = [...new Set(parentIds)]
 
     const args = items[0]?.args as IChildPaginationArgs<Entity>
     const parent = items[0]?.parent
@@ -50,7 +57,7 @@ export const childConnectionLoader = async <Entity extends BaseEntity, Node>(
 
     // Create the Dataloader map of parentId: childConnectionNode[]
     const parentMap = new Map<string, IPaginatedResponse<Node>>(
-        parentIds.map((parentId) => [
+        uniqueParentIds.map((parentId) => [
             parentId,
             {
                 totalCount: 0,
@@ -76,7 +83,7 @@ export const childConnectionLoader = async <Entity extends BaseEntity, Node>(
         filter: {
             [parent.filterKey]: {
                 operator: 'in',
-                value: parentIds as string[],
+                value: uniqueParentIds,
             },
             ...args.filter,
         },
@@ -168,7 +175,7 @@ export const childConnectionLoader = async <Entity extends BaseEntity, Node>(
     const childParentIds = childrenRaw.map((c) => c.parentId)
     const entities = await convertRawToEntities(childrenRaw, baseScope)
     const parentToChildMap = new Map<string, Entity[]>(
-        parentIds.map((id) => [id, []])
+        uniqueParentIds.map((id) => [id, []])
     )
 
     childParentIds.forEach((parentId, index) => {
@@ -205,5 +212,9 @@ export const childConnectionLoader = async <Entity extends BaseEntity, Node>(
         }
     }
 
-    return Array.from(parentMap.values())
+    const result = []
+    for (const parentId of parentIds) {
+        result.push(parentMap.get(parentId)!)
+    }
+    return result
 }
