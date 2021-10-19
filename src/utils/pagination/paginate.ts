@@ -188,7 +188,6 @@ export const getPaginationQuery = async ({
     directionArgs,
     scope,
     sort,
-    includeTotalCount,
 }: IPaginateData) => {
     const pageSize = directionArgs?.count
         ? directionArgs.count
@@ -278,7 +277,7 @@ export const paginateData = async <T = unknown>({
 
     let adjustedPageSize = pageSize
     let totalCount
-    if (direction === 'BACKWARD') {
+    if (direction === 'BACKWARD' || includeTotalCount) {
         totalCount = await scope.getCount()
         adjustedPageSize = adjustPageSize(
             pageSize,
