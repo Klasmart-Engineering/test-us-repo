@@ -130,21 +130,7 @@ export async function usersConnectionQuery({
         )
     }
 
-    scope.select(
-        ([
-            'user_id',
-            'given_name',
-            'family_name',
-            'avatar',
-            'status',
-            'email',
-            'phone',
-            'alternate_email',
-            'alternate_phone',
-            'date_of_birth',
-            'gender',
-        ] as (keyof User)[]).map((field) => `User.${field}`)
-    )
+    scope.select(coreUserConnectionNodeFields)
 
     return scope
 }
@@ -171,3 +157,17 @@ export function mapUserToUserConnectionNode(
         // other properties have dedicated resolvers that use Dataloader
     }
 }
+
+export const coreUserConnectionNodeFields = ([
+    'user_id',
+    'given_name',
+    'family_name',
+    'avatar',
+    'status',
+    'email',
+    'phone',
+    'alternate_email',
+    'alternate_phone',
+    'date_of_birth',
+    'gender',
+] as (keyof User)[]).map((field) => `User.${field}`)

@@ -24,6 +24,7 @@ import {
     IChildConnectionDataloaderKey,
 } from './childConnectionLoader'
 import { IClassesConnectionLoaders } from './classesConnection'
+import { NodeDataLoader } from './genericNode'
 import { IGradesConnectionLoaders } from './gradesConnection'
 import {
     brandingForOrganizations,
@@ -40,7 +41,16 @@ import {
     schoolMembershipsForUsers,
     usersByIds,
 } from './user'
-import { IUsersConnectionLoaders } from './usersConnection'
+import {
+    IUsersConnectionLoaders,
+    orgsForUsers,
+    rolesForUsers,
+    schoolsForUsers,
+} from './usersConnection'
+
+interface IUserNodeDataLoaders extends Required<IUsersConnectionLoaders> {
+    node?: NodeDataLoader<User, CoreUserConnectionNode>
+}
 
 export interface IDataLoaders {
     usersConnection?: IUsersConnectionLoaders
@@ -50,6 +60,7 @@ export interface IDataLoaders {
     subjectsConnection?: ISubjectsConnectionLoaders
     organizationsConnection?: IOrganizationsConnectionLoaders
     user: IUsersLoaders
+    userNode: IUserNodeDataLoaders
     organization: IOrganizationLoaders
     school: ISchoolLoaders
 
@@ -118,5 +129,10 @@ export function createContextLazyLoaders(): IDataLoaders {
                     )
                 })
         ),
+        userNode: {
+            organizations: new DataLoader((keys) => orgsForUsers(keys)),
+            schools: new DataLoader((keys) => schoolsForUsers(keys)),
+            roles: new DataLoader((keys) => rolesForUsers(keys)),
+        },
     }
 }
