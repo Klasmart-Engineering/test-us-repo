@@ -3,10 +3,7 @@ import { Organization } from '../entities/organization'
 import { School } from '../entities/school'
 import { ISchoolsConnectionNode } from '../types/graphQL/schoolsConnectionNode'
 import { findTotalCountInPaginationEndpoints } from '../utils/graphql'
-import {
-    filterHasProperty,
-    getWhereClauseFromFilter,
-} from '../utils/pagination/filtering'
+import { getWhereClauseFromFilter } from '../utils/pagination/filtering'
 import {
     IEdge,
     IPaginatedResponse,
