@@ -738,4 +738,63 @@ describe('schoolsConnection', () => {
             )
         })
     })
+
+    context('child connections', async () => {
+        context('.usersConnection', async () => {
+            beforeEach(async () => {
+                for (let i = 0; i < 10; i++) {
+                    const user = await createUser().save()
+                    await createOrganizationMembership({
+                        user,
+                        organization: org1,
+                    }).save()
+                    await createSchoolMembership({
+                        user,
+                        school: schools[0],
+                    }).save()
+                }
+            })
+            it('fetches a schools users', async () => {
+                const result = await schoolsConnection(
+                    testClient,
+                    'FORWARD',
+                    { count: 50 },
+                    true,
+                    { authorization: getAdminAuthToken() }
+                )
+
+                expect(result.totalCount).to.eq(20)
+                const schoolNode = result.edges.find(
+                    (n) => n.node.id === schools[0].school_id
+                )
+                expect(schoolNode?.node.usersConnection?.totalCount).to.eq(10)
+            })
+            it('dataloads child connection nodes', async () => {
+                connection.logger.reset()
+                const result = await schoolsConnection(
+                    testClient,
+                    'FORWARD',
+                    { count: 50 },
+                    true,
+                    { authorization: getAdminAuthToken() }
+                )
+                expect(result.totalCount).to.eq(20)
+                const schoolNode = result.edges.find(
+                    (n) => n.node.id === schools[0].school_id
+                )
+                expect(schoolNode?.node.usersConnection?.totalCount).to.eq(10)
+                expect(
+                    schoolNode?.node.usersConnection?.edges
+                ).to.have.lengthOf(10)
+                for (const edge of schoolNode!.node.usersConnection!.edges ||
+                    []) {
+                    expect(edge.node.organizations).to.have.lengthOf(1)
+                    expect(edge.node.organizations[0].id).to.eq(
+                        org1.organization_id
+                    )
+                }
+                expect(connection.logger.count).to.eq(6)
+            })
+        })
+    })
 })

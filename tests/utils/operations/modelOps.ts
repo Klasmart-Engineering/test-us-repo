@@ -369,6 +369,16 @@ const SCHOOLS_CONNECTION = `
                     shortCode
                     status
                     organizationId
+                    usersConnection {
+                        totalCount
+                        edges {
+                            node {
+                                organizations {
+                                    id
+                                }
+                            }
+                        }
+                    }
                 }
             }
             pageInfo{

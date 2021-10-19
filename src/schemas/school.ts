@@ -1,9 +1,22 @@
-import gql from 'graphql-tag'
-import { Model } from '../model'
 import { ApolloServerExpressConfig } from 'apollo-server-express'
-import { Context } from '../main'
-import { SchoolMembership } from '../entities/schoolMembership'
+import Dataloader from 'dataloader'
+import { GraphQLResolveInfo } from 'graphql'
+import gql from 'graphql-tag'
 import { School } from '../entities/school'
+import { SchoolMembership } from '../entities/schoolMembership'
+import { User } from '../entities/user'
+import {
+    orgsForUsers,
+    schoolsForUsers,
+    rolesForUsers,
+} from '../loaders/usersConnection'
+import { Context } from '../main'
+import { Model } from '../model'
+import { ISchoolsConnectionNode } from '../types/graphQL/schoolsConnectionNode'
+import {
+    IPaginationArgs,
+    shouldIncludeTotalCount,
+} from '../utils/pagination/paginate'
 
 const typeDefs = gql`
     extend type Mutation {
@@ -89,6 +102,14 @@ const typeDefs = gql`
         status: Status!
         shortCode: String
         organizationId: ID!
+
+        usersConnection(
+            count: PageSize
+            cursor: String
+            filter: UserFilter
+            sort: UserSortInput
+            direction: ConnectionDirection
+        ): UsersConnectionResponse @isAdmin(entity: "user")
     }
 
     input SchoolFilter {
@@ -132,7 +153,18 @@ export default function getDefault(
             Query: {
                 school: (_parent, args, ctx, _info) =>
                     model.getSchool(args, ctx),
-                schoolsConnection: (_parent, args, ctx, info) => {
+                schoolsConnection: (_parent, args, ctx: Context, info) => {
+                    // Add dataloaders for the usersConnection
+                    // TODO remove once corresponding child connections have been created
+                    ctx.loaders.usersConnection = {
+                        organizations: new Dataloader((keys) =>
+                            orgsForUsers(keys)
+                        ),
+                        schools: new Dataloader((keys) =>
+                            schoolsForUsers(keys)
+                        ),
+                        roles: new Dataloader((keys) => rolesForUsers(keys)),
+                    }
                     return model.schoolsConnection(ctx, info, args)
                 },
             },
@@ -153,6 +185,27 @@ export default function getDefault(
                     return ctx.loaders.school.organization.instance.load(
                         school.school_id
                     )
+                },
+            },
+            SchoolConnectionNode: {
+                usersConnection: async (
+                    school: ISchoolsConnectionNode,
+                    args: IPaginationArgs<User>,
+                    ctx: Context,
+                    info: GraphQLResolveInfo
+                ) => {
+                    return ctx.loaders.usersConnectionChild.instance.load({
+                        args,
+                        includeTotalCount: shouldIncludeTotalCount(
+                            info,
+                            args.direction
+                        ),
+                        parent: {
+                            id: school.id,
+                            filterKey: 'schoolId',
+                            pivot: '"SchoolMembership"."schoolSchoolId"',
+                        },
+                    })
                 },
             },
         },
