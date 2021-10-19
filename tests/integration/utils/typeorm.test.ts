@@ -28,7 +28,7 @@ describe('convertRawToEntities', () => {
         }
     })
 
-    it('discards any additional columns', async () => {
+    it('discards any columns not defined by the entity', async () => {
         await createUser().save()
         const userQuery = createQueryBuilder(User).addSelect(
             'given_name',
@@ -42,5 +42,27 @@ describe('convertRawToEntities', () => {
         for (const user of entities) {
             expect((user as any)['column_to_discard']).to.be.undefined
         }
+    })
+    it('returns undefined for invalid objects', async () => {
+        await createUser().save()
+        const userQuery = createQueryBuilder(User)
+
+        const entities = await convertRawToEntities(
+            [{ random: 'object' }],
+            userQuery
+        )
+        expect(entities).to.have.lengthOf(1)
+        expect(entities[0]).to.be.undefined
+    })
+    it('does not deduplicate', async () => {
+        await createUser().save()
+        const userQuery = createQueryBuilder(User)
+        const rawResult = await userQuery.getRawMany()
+
+        const entities = await convertRawToEntities(
+            [...rawResult, ...rawResult],
+            userQuery
+        )
+        expect(entities).to.have.lengthOf(2)
     })
 })
