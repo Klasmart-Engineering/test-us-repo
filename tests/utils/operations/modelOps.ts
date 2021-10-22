@@ -27,6 +27,7 @@ import { SubjectConnectionNode } from '../../../src/types/graphQL/subjectConnect
 import { OrganizationConnectionNode } from '../../../src/types/graphQL/organizationConnectionNode'
 import { gql } from 'apollo-server-express'
 import { Role } from '../../../src/entities/role'
+import { CategorySummaryNode } from '../../../src/types/graphQL/categorySummaryNode'
 
 const NEW_USER = `
     mutation myMutation(
@@ -311,28 +312,57 @@ export const USERS_CONNECTION_MAIN_DATA = `
     }
 `
 
+const USER_NODE_FIELDS = gql`
+    fragment userFields on UserConnectionNode {
+        id
+        givenName
+        familyName
+        avatar
+        contactInfo {
+            email
+            phone
+        }
+        alternateContactInfo {
+            email
+            phone
+        }
+        status
+        dateOfBirth
+        gender
+    }
+`
+
 const USERS_CONNECTION_NODES = gql`
+    ${USER_NODE_FIELDS}
+
     query($filter: UserFilter) {
         usersConnection(direction: FORWARD, filter: $filter) {
             edges {
                 node {
-                    id
-                    givenName
-                    familyName
-                    avatar
-                    contactInfo {
-                        email
-                        phone
-                    }
-                    alternateContactInfo {
-                        email
-                        phone
-                    }
-                    status
-                    dateOfBirth
-                    gender
+                    ...userFields
                 }
             }
+        }
+    }
+`
+
+const USER_NODE_QUERY = gql`
+    ${USER_NODE_FIELDS}
+
+    query($id: ID!) {
+        userNode(id: $id) {
+            ...userFields
+        }
+    }
+`
+
+const USER_NODE_QUERY_2_NODES = gql`
+    query($id: ID!, $id2: ID!) {
+        userNode(id: $id) {
+            givenName
+        }
+        userNode2: userNode(id: $id2) {
+            familyName
         }
     }
 `
@@ -516,6 +546,29 @@ const GRADES_CONNECTION_MAIN_DATA = `
                 }
             }
 
+            pageInfo {
+                hasNextPage
+                hasPreviousPage
+                startCursor
+                endCursor
+            }
+        }
+    }
+`
+
+export const CATEGORIES_CONNECTION = `
+    query categoriesConnection($direction: ConnectionDirection!, $directionArgs: ConnectionsDirectionArgs, $filterArgs: CategoryFilter, $sortArgs: CategorySortInput) {
+        categoriesConnection(direction: $direction, directionArgs: $directionArgs, filter: $filterArgs, sort: $sortArgs) {
+            totalCount
+            edges {
+                cursor
+                node {
+                    id
+                    name
+                    status
+                    system
+                }
+            }
             pageInfo {
                 hasNextPage
                 hasPreviousPage
@@ -1269,6 +1322,45 @@ export async function usersConnectionNodes(
     return res.data?.usersConnection
 }
 
+export async function userNode(
+    testClient: ApolloServerTestClient,
+    headers: Headers,
+    id: string
+): Promise<UserConnectionNode> {
+    const { query } = testClient
+    const operation = () =>
+        query({
+            query: USER_NODE_QUERY,
+            variables: {
+                id,
+            },
+            headers,
+        })
+
+    const res = await gqlTry(operation)
+    return res.data?.userNode
+}
+
+export async function user2Nodes(
+    testClient: ApolloServerTestClient,
+    headers: Headers,
+    id: string,
+    id2: string
+) {
+    const { query } = testClient
+    const operation = () =>
+        query({
+            query: USER_NODE_QUERY_2_NODES,
+            variables: {
+                id,
+                id2,
+            },
+            headers,
+        })
+
+    await gqlTry(operation)
+}
+
 export async function permissionsConnection(
     testClient: ApolloServerTestClient,
     direction: string,
@@ -1579,6 +1671,30 @@ export async function subjectsConnectionMainData(
 
     const res = await gqlTry(operation)
     return res.data?.subjectsConnection
+}
+
+export async function categoriesConnection(
+    testClient: ApolloServerTestClient,
+    direction: string,
+    directionArgs: any,
+    headers?: Headers,
+    filter?: IEntityFilter,
+    sort?: ISortField
+): Promise<IPaginatedResponse<CategorySummaryNode>> {
+    const { query } = testClient
+    const operation = () =>
+        query({
+            query: CATEGORIES_CONNECTION,
+            variables: {
+                direction,
+                directionArgs,
+                filterArgs: filter,
+                sortArgs: sort,
+            },
+            headers: headers,
+        })
+    const res = await gqlTry(operation)
+    return res.data?.categoriesConnection
 }
 
 export async function organizationsConnection(
