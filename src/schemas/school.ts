@@ -196,10 +196,7 @@ export default function getDefault(
                 ) => {
                     return ctx.loaders.usersConnectionChild.instance.load({
                         args,
-                        includeTotalCount: shouldIncludeTotalCount(
-                            info,
-                            args.direction
-                        ),
+                        includeTotalCount: shouldIncludeTotalCount(info, args),
                         parent: {
                             id: school.id,
                             filterKey: 'schoolId',
