@@ -579,7 +579,7 @@ describe('acceptance.school', () => {
                 email: UserPermissions.ADMIN_EMAILS[0],
             }).save()
 
-            const school = await createFactorySchool().save()
+            const school = await createSchoolFactory().save()
             const user = await createUser().save()
             const role = await createRole().save()
 
