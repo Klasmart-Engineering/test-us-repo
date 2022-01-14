@@ -464,7 +464,7 @@ export class AddUsersToSchools extends AddMembershipMutation<
         ])
         const usersPromise = getMap.user(userIds)
         const rolesPromise = getMap.role(
-            input.map((val) => val.schoolRoleIds).flat()
+            input.flatMap((val) => val.schoolRoleIds)
         )
         const membershipsPromise = getMap.membership.school(
             this.mainEntityIds,
