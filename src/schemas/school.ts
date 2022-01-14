@@ -226,7 +226,7 @@ const typeDefs = gql`
 
     input AddUsersToSchoolInput {
         schoolId: ID!
-        schoolRoleIds: [ID!]!
+        schoolRoleIds: [ID!]
         userIds: [ID!]!
     }
 

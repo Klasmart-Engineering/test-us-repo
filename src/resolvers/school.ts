@@ -464,7 +464,7 @@ export class AddUsersToSchools extends AddMembershipMutation<
         ])
         const usersPromise = getMap.user(userIds)
         const rolesPromise = getMap.role(
-            input.flatMap((val) => val.schoolRoleIds)
+            input.flatMap((val) => val.schoolRoleIds ?? [])
         )
         const membershipsPromise = getMap.membership.school(
             this.mainEntityIds,
@@ -517,7 +517,7 @@ export class AddUsersToSchools extends AddMembershipMutation<
         )
         const roles = validate.nonExistent.role(
             index,
-            currentInput.schoolRoleIds,
+            currentInput.schoolRoleIds ?? [],
             maps.roles
         )
         errors.push(...roles.errors, ...users.errors)
@@ -562,7 +562,9 @@ export class AddUsersToSchools extends AddMembershipMutation<
             membership.user_id = userId
             membership.user = Promise.resolve(maps.users.get(userId) as User)
             membership.roles = Promise.resolve(
-                currentInput.schoolRoleIds.map((r) => maps.roles.get(r) as Role)
+                currentInput.schoolRoleIds?.map(
+                    (r) => maps.roles.get(r) as Role
+                ) ?? []
             )
             memberships.push(membership)
         }

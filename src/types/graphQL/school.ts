@@ -43,7 +43,7 @@ export interface DeleteSchoolInput {
 
 export interface AddUsersToSchoolInput {
     schoolId: string
-    schoolRoleIds: string[]
+    schoolRoleIds?: string[]
     userIds: string[]
 }
 

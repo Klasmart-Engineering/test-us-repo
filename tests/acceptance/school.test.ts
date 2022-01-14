@@ -605,7 +605,7 @@ describe('acceptance.school', () => {
             ).to.have.lengthOf(1)
         })
 
-        it('has mandatory schoolId, userIds & schoolRoleIds input fields', async () => {
+        it('has mandatory schoolId & userIds input fields', async () => {
             const response = await makeRequest(
                 request,
                 print(ADD_USERS_TO_SCHOOLS),
@@ -613,14 +613,11 @@ describe('acceptance.school', () => {
                 generateToken(userToPayload(adminUser))
             )
             expect(response.status).to.eq(400)
-            expect(response.body.errors).to.have.lengthOf(3)
+            expect(response.body.errors).to.have.lengthOf(2)
             expect(response.body.errors[0].message).to.contain(
                 'Field "schoolId" of required type "ID!" was not provided.'
             )
             expect(response.body.errors[1].message).to.contain(
-                'Field "schoolRoleIds" of required type "[ID!]!" was not provided'
-            )
-            expect(response.body.errors[2].message).to.contain(
                 'Field "userIds" of required type "[ID!]!" was not provided.'
             )
         })
