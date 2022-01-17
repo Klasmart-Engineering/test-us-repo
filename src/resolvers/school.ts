@@ -520,29 +520,15 @@ export class AddUsersToSchools extends AddMembershipMutation<
             currentInput.schoolRoleIds ?? [],
             maps.roles
         )
-        errors.push(...roles.errors, ...users.errors)
 
-        for (const userId of currentInput.userIds) {
-            const user = maps.users.get(userId) as User
-            if (
-                maps.memberships.has({
-                    schoolId: currentInput.schoolId,
-                    userId,
-                })
-            ) {
-                errors.push(
-                    createEntityAPIError(
-                        'duplicateChild',
-                        index,
-                        'User',
-                        user.user_name(),
-                        'School',
-                        currentEntity.school_name,
-                        ['school_id', 'user_id']
-                    )
-                )
-            }
-        }
+        const memberships = validate.duplicate.users.in.school(
+            index,
+            currentInput.schoolId,
+            currentInput.userIds,
+            maps.memberships
+        )
+
+        errors.push(...roles.errors, ...users.errors, ...memberships.errors)
 
         return errors
     }

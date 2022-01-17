@@ -3372,10 +3372,9 @@ describe('school', () => {
                             'duplicateChild',
                             0,
                             'User',
-                            users[0].user_name() || '',
+                            users[0].user_id,
                             'School',
-                            schools[0].school_name,
-                            ['school_id', 'user_id']
+                            schools[0].school_id
                         ),
                     ]
                     compareMultipleErrors(errors, xErrors)

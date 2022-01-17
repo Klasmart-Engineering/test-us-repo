@@ -2,7 +2,6 @@ import { APIError } from '../../types/errors/apiError'
 import { User } from '../../entities/user'
 import { School } from '../../entities/school'
 import { Organization } from '../../entities/organization'
-import { SchoolMembership } from '../../entities/schoolMembership'
 import { OrganizationMembership } from '../../entities/organizationMembership'
 import { createEntityAPIError } from './errors'
 import { OrganizationMembershipMap, SchoolMembershipMap } from './entityMaps'
@@ -50,7 +49,7 @@ function checkForNonExistentOrDuplicate<T>(
  * Checks `ids` against a set.
  *
  * Returns a 'nonExistentChild'/'duplicateChild' error for each
- * id 'not found'/'found' (depending on the value of `checkType`)
+ * if 'not found'/'found' (depending on the value of `checkType`)
  */
 function checkForNonExistentOrDuplicateChild(
     checkType: 'nonExistentChild' | 'duplicateChild',
@@ -84,41 +83,38 @@ function checkForNonExistentOrDuplicateChild(
 }
 
 /**
- * Checks composite id `{schoolId, userId}` of a
- * `SchoolMembership` against a map. Can check the
- * memberships of a list of users for a school.
+ * Checks if each user has a membership with the given school.
  *
- * Returns a `nonExistentChild` error for each user which does
- * not have a membership on the school.
- *
- * Also returns the `SchoolMembership` entities that where found
- * on the map.
+ * Returns a 'nonExistentChild'/'duplicateChild' error for each
+ * if 'not found'/'found' (depending on the value of `checkType`)
  */
-function nonExistentSchoolMembership(
-    index: number,
-    schoolId: string,
-    userIds: string[],
-    map: SchoolMembershipMap
+function nonExistentOrDuplicateSchoolMembership(
+    checkType: 'nonExistentChild' | 'duplicateChild'
 ) {
-    const values: SchoolMembership[] = []
-    const errors: APIError[] = []
-    for (const userId of userIds) {
-        const membership = map.get({ schoolId, userId })
-        if (membership) values.push(membership)
-        else {
-            errors.push(
-                createEntityAPIError(
-                    'nonExistentChild',
-                    index,
-                    'User',
-                    userId,
-                    'School',
-                    schoolId
+    return (
+        index: number,
+        schoolId: string,
+        userIds: string[],
+        map: SchoolMembershipMap
+    ) => {
+        const errors: APIError[] = []
+        for (const userId of userIds) {
+            const hasChild = map.has({ schoolId, userId })
+            if (checkType === 'duplicateChild' ? hasChild : !hasChild) {
+                errors.push(
+                    createEntityAPIError(
+                        checkType,
+                        index,
+                        'User',
+                        userId,
+                        'School',
+                        schoolId
+                    )
                 )
-            )
+            }
         }
+        return { errors }
     }
-    return { values, errors }
 }
 
 /**
@@ -201,7 +197,7 @@ const nonExistent = {
     ageRange: checkForNonExistent<AgeRange>('AgeRange'),
     users: {
         in: {
-            school: nonExistentSchoolMembership,
+            school: nonExistentOrDuplicateSchoolMembership('nonExistentChild'),
             organization: nonExistentOrganizationMembership,
         },
     },
@@ -219,6 +215,11 @@ const duplicate = {
     program: checkForDuplicate<Program>('Program'),
     ageRange: checkForDuplicate<AgeRange>('AgeRange'),
     programs: { in: { class: checkForDuplicateChild('Class', 'Program') } },
+    users: {
+        in: {
+            school: nonExistentOrDuplicateSchoolMembership('duplicateChild'),
+        },
+    },
 }
 
 // INTERFACE OBJECT
