@@ -101,6 +101,7 @@ import {
 import { APIErrorCollection } from '../../src/types/errors/apiError'
 import {
     createDuplicateAttributeAPIError,
+    createDuplicateInputAttributeAPIError,
     createEntityAPIError,
     createNonExistentOrInactiveEntityAPIError,
 } from '../../src/utils/resolvers/errors'
@@ -3313,7 +3314,15 @@ describe('school', () => {
                     input,
                     maps
                 )
-                expect(result.apiErrors).to.have.length(1)
+                const xErrors = [
+                    createEntityAPIError(
+                        'nonExistent',
+                        0,
+                        'School',
+                        schools[0].school_id
+                    ),
+                ]
+                compareMultipleErrors(result.apiErrors, xErrors)
                 expect(result.validInputs).to.have.length(1)
             })
             it('produces errors for duplicate schools', async () => {
@@ -3325,7 +3334,14 @@ describe('school', () => {
                     input,
                     maps
                 )
-                expect(result.apiErrors).to.have.length(1)
+                const xErrors = [
+                    createDuplicateAttributeAPIError(
+                        input.length - 1,
+                        ['id'],
+                        'AddUsersToSchoolInput'
+                    ),
+                ]
+                compareMultipleErrors(result.apiErrors, xErrors)
                 expect(result.validInputs).to.have.length(2)
             })
         })
