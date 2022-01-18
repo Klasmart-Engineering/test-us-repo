@@ -103,6 +103,7 @@ import {
     createDuplicateAttributeAPIError,
     createDuplicateInputAttributeAPIError,
     createEntityAPIError,
+    createInputLengthAPIError,
     createNonExistentOrInactiveEntityAPIError,
 } from '../../src/utils/resolvers/errors'
 import { NIL_UUID } from '../utils/database'
@@ -3306,14 +3307,14 @@ describe('school', () => {
             })
         })
         context('.validationOverAllInputs', () => {
-            it('produces errors for nonexistent schools', async () => {
-                await schools[0].inactivate(getManager())
+            async function validateOverAllInputs() {
                 const mutation = getAddUsersToSchools()
                 const maps = await mutation.generateEntityMaps(input)
-                const result = await mutation.validationOverAllInputs(
-                    input,
-                    maps
-                )
+                return mutation.validationOverAllInputs(input, maps)
+            }
+            it('produces errors for nonexistent schools', async () => {
+                await schools[0].inactivate(getManager())
+                const result = await validateOverAllInputs()
                 const xErrors = [
                     createEntityAPIError(
                         'nonExistent',
@@ -3328,12 +3329,7 @@ describe('school', () => {
             it('produces errors for duplicate schools', async () => {
                 input.push(input[0])
 
-                const mutation = getAddUsersToSchools()
-                const maps = await mutation.generateEntityMaps(input)
-                const result = await mutation.validationOverAllInputs(
-                    input,
-                    maps
-                )
+                const result = await validateOverAllInputs()
                 const xErrors = [
                     createDuplicateAttributeAPIError(
                         input.length - 1,
@@ -3343,6 +3339,76 @@ describe('school', () => {
                 ]
                 compareMultipleErrors(result.apiErrors, xErrors)
                 expect(result.validInputs).to.have.length(2)
+            })
+            context('subarrays', () => {
+                context('userIds', () => {
+                    it('checks for duplicates', async () => {
+                        input[0].userIds.push(input[0].userIds[0])
+                        const result = await validateOverAllInputs()
+                        const xErrors = [
+                            createDuplicateAttributeAPIError(
+                                0,
+                                ['userIds'],
+                                'AddUsersToSchoolInput'
+                            ),
+                        ]
+                        compareMultipleErrors(result.apiErrors, xErrors)
+                        expect(result.validInputs).to.have.length(
+                            input.length - 1
+                        )
+                    })
+                    it('checks for length', async () => {
+                        input[0].userIds = []
+                        const result = await validateOverAllInputs()
+                        const xErrors = [
+                            createInputLengthAPIError(
+                                'AddUsersToSchoolInput',
+                                'min',
+                                'userIds',
+                                0
+                            ),
+                        ]
+                        compareMultipleErrors(result.apiErrors, xErrors)
+                        expect(result.validInputs).to.have.length(
+                            input.length - 1
+                        )
+                    })
+                })
+            })
+            context('subarrays', () => {
+                context('schoolRoleIds', () => {
+                    it('checks for duplicates', async () => {
+                        input[0].schoolRoleIds!.push(input[0].schoolRoleIds![0])
+                        const result = await validateOverAllInputs()
+                        const xErrors = [
+                            createDuplicateAttributeAPIError(
+                                0,
+                                ['schoolRoleIds'],
+                                'AddUsersToSchoolInput'
+                            ),
+                        ]
+                        compareMultipleErrors(result.apiErrors, xErrors)
+                        expect(result.validInputs).to.have.length(
+                            input.length - 1
+                        )
+                    })
+                    it('checks for length', async () => {
+                        input[0].schoolRoleIds = []
+                        const result = await validateOverAllInputs()
+                        const xErrors = [
+                            createInputLengthAPIError(
+                                'AddUsersToSchoolInput',
+                                'min',
+                                'schoolRoleIds',
+                                0
+                            ),
+                        ]
+                        compareMultipleErrors(result.apiErrors, xErrors)
+                        expect(result.validInputs).to.have.length(
+                            input.length - 1
+                        )
+                    })
+                })
             })
         })
         context('.validate', () => {
