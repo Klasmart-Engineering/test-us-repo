@@ -432,7 +432,6 @@ describe('inputValidation', () => {
                 it('returns all the memberships', () => {
                     const val = validateNonExistentChildSchool()
                     expect(val.errors).to.be.empty
-                    expect(val.values).to.deep.equal(memberships)
                 })
             })
 
@@ -456,7 +455,6 @@ describe('inputValidation', () => {
                             school.school_id
                         )
                     })
-                    expect(val.values).to.deep.equal(memberships)
                     compareMultipleErrors(val.errors, xErrors)
                 })
             })
@@ -471,7 +469,6 @@ describe('inputValidation', () => {
                             school.school_id
                         )
                     })
-                    expect(val.values).to.be.empty
                     compareMultipleErrors(val.errors, xErrors)
                 })
             })
