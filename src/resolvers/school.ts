@@ -33,7 +33,6 @@ import {
     DeleteEntityMap,
     validateActiveAndNoDuplicates,
     ProcessedResult,
-    filterInvalidInputs,
     validateSubItemsLengthAndNoDuplicates,
 } from '../utils/mutations/commonStructure'
 import { Class } from '../entities/class'
