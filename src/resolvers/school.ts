@@ -34,6 +34,7 @@ import {
     validateActiveAndNoDuplicates,
     ProcessedResult,
     validateSubItemsLengthAndNoDuplicates,
+    filterInvalidInputs,
 } from '../utils/mutations/commonStructure'
 import { Class } from '../entities/class'
 import {
@@ -277,12 +278,15 @@ export class UpdateSchools extends UpdateMutation<
         validInputs: { index: number; input: UpdateSchoolInput }[]
         apiErrors: APIError[]
     } {
-        return validateActiveAndNoDuplicates(
+        return filterInvalidInputs(
             inputs,
-            entityMaps,
-            inputs.map((val) => val.id),
-            this.EntityType.name,
-            this.inputTypeName
+            validateActiveAndNoDuplicates(
+                inputs,
+                entityMaps,
+                inputs.map((val) => val.id),
+                this.EntityType.name,
+                this.inputTypeName
+            )
         )
     }
 
@@ -455,25 +459,21 @@ export class AddUsersToSchools extends AddMembershipMutation<
             this.inputTypeName
         )
         const roleIdsErrorMap = validateSubItemsLengthAndNoDuplicates(
-            schoolsErrorMap.validInputs.map((i) => i.input),
+            inputs,
             this.inputTypeName,
             'schoolRoleIds'
         )
 
         const userIdsErrorMap = validateSubItemsLengthAndNoDuplicates(
-            roleIdsErrorMap.validInputs.map((i) => i.input),
+            inputs,
             this.inputTypeName,
             'userIds'
         )
 
-        return {
-            validInputs: userIdsErrorMap.validInputs,
-            apiErrors: [
-                ...schoolsErrorMap.apiErrors,
-                ...roleIdsErrorMap.apiErrors,
-                ...userIdsErrorMap.apiErrors,
-            ],
-        }
+        return filterInvalidInputs(
+            inputs,
+            [schoolsErrorMap, roleIdsErrorMap, userIdsErrorMap].flat()
+        )
     }
 
     async generateEntityMaps(
@@ -648,12 +648,15 @@ export class RemoveUsersFromSchools extends RemoveMembershipMutation<
         validInputs: { index: number; input: RemoveUsersFromSchoolInput }[]
         apiErrors: APIError[]
     } {
-        return validateActiveAndNoDuplicates(
+        return filterInvalidInputs(
             inputs,
-            entityMaps,
-            inputs.map((val) => val.schoolId),
-            this.EntityType.name,
-            this.inputTypeName
+            validateActiveAndNoDuplicates(
+                inputs,
+                entityMaps,
+                inputs.map((val) => val.schoolId),
+                this.EntityType.name,
+                this.inputTypeName
+            )
         )
     }
 
@@ -790,12 +793,15 @@ export class AddClassesToSchools extends AddMutation<
         validInputs: { index: number; input: AddClassesToSchoolInput }[]
         apiErrors: APIError[]
     } {
-        return validateActiveAndNoDuplicates(
+        return filterInvalidInputs(
             inputs,
-            entityMaps,
-            inputs.map((val) => val.schoolId),
-            this.EntityType.name,
-            this.inputTypeName
+            validateActiveAndNoDuplicates(
+                inputs,
+                entityMaps,
+                inputs.map((val) => val.schoolId),
+                this.EntityType.name,
+                this.inputTypeName
+            )
         )
     }
 
@@ -984,12 +990,15 @@ export class AddProgramsToSchools extends AddMutation<
         validInputs: { index: number; input: AddProgramsToSchoolInput }[]
         apiErrors: APIError[]
     } {
-        return validateActiveAndNoDuplicates(
+        return filterInvalidInputs(
             inputs,
-            entityMaps,
-            inputs.map((val) => val.schoolId),
-            this.EntityType.name,
-            this.inputTypeName
+            validateActiveAndNoDuplicates(
+                inputs,
+                entityMaps,
+                inputs.map((val) => val.schoolId),
+                this.EntityType.name,
+                this.inputTypeName
+            )
         )
     }
 
@@ -1293,12 +1302,15 @@ export class RemoveProgramsFromSchools extends AddMutation<
         validInputs: { index: number; input: RemoveProgramsFromSchoolInput }[]
         apiErrors: APIError[]
     } {
-        return validateActiveAndNoDuplicates(
+        return filterInvalidInputs(
             inputs,
-            entityMaps,
-            inputs.map((val) => val.schoolId),
-            this.EntityType.name,
-            this.inputTypeName
+            validateActiveAndNoDuplicates(
+                inputs,
+                entityMaps,
+                inputs.map((val) => val.schoolId),
+                this.EntityType.name,
+                this.inputTypeName
+            )
         )
     }
 
