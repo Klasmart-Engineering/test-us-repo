@@ -33,6 +33,8 @@ import {
     DeleteEntityMap,
     validateActiveAndNoDuplicates,
     ProcessedResult,
+    filterInvalidInputs,
+    validateSubItemsLengthAndNoDuplicates,
 } from '../utils/mutations/commonStructure'
 import { Class } from '../entities/class'
 import {
@@ -445,17 +447,34 @@ export class AddUsersToSchools extends AddMembershipMutation<
     validationOverAllInputs(
         inputs: AddUsersToSchoolInput[],
         entityMaps: AddUsersToSchoolsEntityMap
-    ): {
-        validInputs: { index: number; input: AddUsersToSchoolInput }[]
-        apiErrors: APIError[]
-    } {
-        return validateActiveAndNoDuplicates(
+    ) {
+        const schoolsErrorMap = validateActiveAndNoDuplicates(
             inputs,
             entityMaps,
             inputs.map((val) => val.schoolId),
             this.EntityType.name,
             this.inputTypeName
         )
+        const roleIdsErrorMap = validateSubItemsLengthAndNoDuplicates(
+            schoolsErrorMap.validInputs.map((i) => i.input),
+            this.inputTypeName,
+            'schoolRoleIds'
+        )
+
+        const userIdsErrorMap = validateSubItemsLengthAndNoDuplicates(
+            roleIdsErrorMap.validInputs.map((i) => i.input),
+            this.inputTypeName,
+            'userIds'
+        )
+
+        return {
+            validInputs: userIdsErrorMap.validInputs,
+            apiErrors: [
+                ...schoolsErrorMap.apiErrors,
+                ...roleIdsErrorMap.apiErrors,
+                ...userIdsErrorMap.apiErrors,
+            ],
+        }
     }
 
     async generateEntityMaps(
