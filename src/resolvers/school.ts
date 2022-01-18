@@ -49,7 +49,10 @@ import {
 } from '../utils/resolvers/entityMaps'
 import { Program } from '../entities/program'
 import { Role } from '../entities/role'
-import { validate } from '../utils/resolvers/inputValidation'
+import {
+    flagExistentSchoolMembership,
+    flagNonExistent,
+} from '../utils/resolvers/inputValidation'
 
 export interface CreateSchoolEntityMap extends EntityMap<School> {
     mainEntity: Map<string, School>
@@ -127,7 +130,7 @@ export class CreateSchools extends CreateMutation<
         if (schoolExist) {
             errors.push(
                 createEntityAPIError(
-                    'duplicateChild',
+                    'existentChild',
                     index,
                     'School',
                     name,
@@ -143,7 +146,7 @@ export class CreateSchools extends CreateMutation<
         if (matchingOrgAndShortcode) {
             errors.push(
                 createEntityAPIError(
-                    'duplicateChild',
+                    'existentChild',
                     index,
                     'School',
                     shortCode,
@@ -304,7 +307,7 @@ export class UpdateSchools extends UpdateMutation<
         ) {
             errors.push(
                 createEntityAPIError(
-                    'duplicateChild',
+                    'existentChild',
                     index,
                     'School',
                     name,
@@ -320,7 +323,7 @@ export class UpdateSchools extends UpdateMutation<
         ) {
             errors.push(
                 createEntityAPIError(
-                    'duplicateChild',
+                    'existentChild',
                     index,
                     'School',
                     shortCode,
@@ -510,18 +513,19 @@ export class AddUsersToSchools extends AddMembershipMutation<
     ): APIError[] {
         const errors: APIError[] = []
 
-        const users = validate.nonExistent.user(
+        const users = flagNonExistent(
+            User,
             index,
             currentInput.userIds,
             maps.users
         )
-        const roles = validate.nonExistent.role(
+        const roles = flagNonExistent(
+            Role,
             index,
             currentInput.schoolRoleIds ?? [],
             maps.roles
         )
-
-        const memberships = validate.duplicate.users.in.school(
+        const memberships = flagExistentSchoolMembership(
             index,
             currentInput.schoolId,
             currentInput.userIds,
@@ -811,7 +815,7 @@ export class AddClassesToSchools extends AddMutation<
             if (itemHasSubitem) {
                 errors.push(
                     createEntityAPIError(
-                        'duplicateChild',
+                        'existentChild',
                         index,
                         subEntityName,
                         subitem[subEntityKeyName],
@@ -1005,7 +1009,7 @@ export class AddProgramsToSchools extends AddMutation<
             if (itemHasSubitem) {
                 errors.push(
                     createEntityAPIError(
-                        'duplicateChild',
+                        'existentChild',
                         index,
                         subEntityName,
                         subitem[subEntityKeyName],
