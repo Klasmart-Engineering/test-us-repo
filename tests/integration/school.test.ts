@@ -3369,7 +3369,7 @@ describe('school', () => {
                     const errors = await validate()
                     const xErrors = [
                         createEntityAPIError(
-                            'duplicateChild',
+                            'existentChild',
                             0,
                             'User',
                             users[0].user_id,
