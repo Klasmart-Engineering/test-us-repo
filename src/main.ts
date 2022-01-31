@@ -1,5 +1,5 @@
 import './utils/dotenv'
-import 'newrelic' // Must be imported as early as possible
+import newrelic from 'newrelic' // Must be imported as early as possible
 import { initApp } from './app'
 import * as Sentry from '@sentry/node'
 import { UserPermissions } from './permissions/userPermissions'
@@ -38,6 +38,7 @@ initApp()
     })
     .catch((e) => {
         Sentry.captureException(e)
+        newrelic.noticeError(e)
         logger.error(e)
         process.exit(-1)
     })
