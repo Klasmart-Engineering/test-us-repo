@@ -453,6 +453,13 @@ export class Organization extends CustomBaseEntity {
                 .getMany()
         } catch (e) {
             logger.error(e)
+            throw new APIError({
+                code: customErrors.nonexistent_entity.code,
+                message: customErrors.nonexistent_entity.message,
+                variables: [],
+                entity: 'Organization',
+                entityName: 'members',
+            })
         }
     }
 
