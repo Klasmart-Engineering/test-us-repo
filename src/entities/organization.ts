@@ -60,7 +60,7 @@ import {
 } from '../operations/organization'
 import { pickBy } from 'lodash'
 import { config } from '../config/config'
-import logger from '../logging'
+import { reportError } from '../utils/resolvers/errors'
 
 @Entity()
 export class Organization extends CustomBaseEntity {
@@ -362,7 +362,7 @@ export class Organization extends CustomBaseEntity {
 
             return this
         } catch (e) {
-            logger.error(e)
+            reportError(e)
         }
     }
 
@@ -414,7 +414,7 @@ export class Organization extends CustomBaseEntity {
             const results = await query.getMany()
             return results
         } catch (e) {
-            logger.error(e)
+            reportError(e)
         }
     }
 
@@ -452,7 +452,7 @@ export class Organization extends CustomBaseEntity {
                 .setParameter('search_query', search_query)
                 .getMany()
         } catch (e) {
-            logger.error(e)
+            reportError(e)
         }
     }
 
@@ -481,7 +481,7 @@ export class Organization extends CustomBaseEntity {
 
             return user
         } catch (e) {
-            logger.error(e)
+            reportError(e)
         }
     }
 
@@ -526,7 +526,7 @@ export class Organization extends CustomBaseEntity {
 
             return membership
         } catch (e) {
-            logger.error(e)
+            reportError(e)
         }
     }
 
@@ -1145,7 +1145,7 @@ export class Organization extends CustomBaseEntity {
             await manager.save(role)
             return role
         } catch (e) {
-            logger.error(e)
+            reportError(e)
         }
     }
 
@@ -1185,7 +1185,7 @@ export class Organization extends CustomBaseEntity {
 
             return _class
         } catch (e) {
-            logger.error(e)
+            reportError(e)
         }
     }
 
@@ -1222,7 +1222,7 @@ export class Organization extends CustomBaseEntity {
 
             return school
         } catch (e) {
-            logger.error(e)
+            reportError(e)
         }
     }
 
@@ -1754,7 +1754,7 @@ export class Organization extends CustomBaseEntity {
 
             return true
         } catch (e) {
-            logger.error(e)
+            reportError(e)
         }
         return false
     }

@@ -19,7 +19,7 @@ import { Class } from './class'
 import { PermissionName } from '../permissions/permissionNames'
 import { CustomBaseEntity } from './customBaseEntity'
 import { config } from '../config/config'
-import logger from '../logging'
+import { reportError } from '../utils/resolvers/errors'
 
 @Entity()
 export class OrganizationMembership extends CustomBaseEntity {
@@ -127,7 +127,7 @@ export class OrganizationMembership extends CustomBaseEntity {
                 return results
             }
         } catch (e) {
-            logger.error(e)
+            reportError(e)
         }
     }
 
@@ -143,7 +143,7 @@ export class OrganizationMembership extends CustomBaseEntity {
                 })
                 .getMany()
         } catch (e) {
-            logger.error(e)
+            reportError(e)
         }
     }
 
@@ -191,7 +191,7 @@ export class OrganizationMembership extends CustomBaseEntity {
             await role.save()
             return role
         } catch (e) {
-            logger.error(e)
+            reportError(e)
         }
     }
 
@@ -233,7 +233,7 @@ export class OrganizationMembership extends CustomBaseEntity {
             await getManager().save(roles)
             return roles
         } catch (e) {
-            logger.error(e)
+            reportError(e)
         }
     }
 
@@ -261,7 +261,7 @@ export class OrganizationMembership extends CustomBaseEntity {
             }
             return this
         } catch (e) {
-            logger.error(e)
+            reportError(e)
         }
     }
     public async leave(
@@ -280,7 +280,7 @@ export class OrganizationMembership extends CustomBaseEntity {
 
             return true
         } catch (e) {
-            logger.error(e)
+            reportError(e)
         }
         return false
     }

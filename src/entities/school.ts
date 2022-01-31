@@ -25,7 +25,7 @@ import { OrganizationMembership } from './organizationMembership'
 import { Program } from './program'
 import { SHORTCODE_DEFAULT_MAXLEN, validateShortCode } from '../utils/shortcode'
 import { CustomBaseEntity } from './customBaseEntity'
-import logger from '../logging'
+import { reportError } from '../utils/resolvers/errors'
 
 @Entity()
 @Check(`"school_name" <> ''`)
@@ -54,7 +54,7 @@ export class School extends CustomBaseEntity {
             ).findOneOrFail({ where: { user_id, school_id: this.school_id } })
             return membership
         } catch (e) {
-            logger.error(e)
+            reportError(e)
         }
     }
 
@@ -107,7 +107,7 @@ export class School extends CustomBaseEntity {
 
             return this
         } catch (e) {
-            logger.error(e)
+            reportError(e)
         }
     }
 
@@ -149,7 +149,7 @@ export class School extends CustomBaseEntity {
             await getManager().save(membership)
             return membership
         } catch (e) {
-            logger.error(e)
+            reportError(e)
         }
     }
 
@@ -220,7 +220,7 @@ export class School extends CustomBaseEntity {
 
             return true
         } catch (e) {
-            logger.error(e)
+            reportError(e)
         }
         return false
     }

@@ -20,7 +20,7 @@ import { PermissionName } from '../permissions/permissionNames'
 import { CustomBaseEntity } from './customBaseEntity'
 import { APIError, APIErrorCollection } from '../types/errors/apiError'
 import { customErrors } from '../types/errors/customError'
-import logger from '../logging'
+import { reportError } from '../utils/resolvers/errors'
 
 @Entity()
 export class Role extends CustomBaseEntity {
@@ -87,7 +87,7 @@ export class Role extends CustomBaseEntity {
 
             return this
         } catch (e) {
-            logger.error(e)
+            reportError(e)
         }
     }
 
@@ -113,7 +113,7 @@ export class Role extends CustomBaseEntity {
             })
             return permission
         } catch (e) {
-            logger.error(e)
+            reportError(e)
         }
     }
 
@@ -155,7 +155,7 @@ export class Role extends CustomBaseEntity {
 
             return permission
         } catch (e) {
-            logger.error(e)
+            reportError(e)
         }
     }
     public async revoke(
@@ -195,7 +195,7 @@ export class Role extends CustomBaseEntity {
 
             return true
         } catch (e) {
-            logger.error(e)
+            reportError(e)
         }
         return false
     }
@@ -227,7 +227,7 @@ export class Role extends CustomBaseEntity {
 
             return permission
         } catch (e) {
-            logger.error(e)
+            reportError(e)
         }
     }
 
@@ -272,7 +272,7 @@ export class Role extends CustomBaseEntity {
 
             return permissionEntities
         } catch (e) {
-            logger.error(e)
+            reportError(e)
         }
     }
 
@@ -362,7 +362,7 @@ export class Role extends CustomBaseEntity {
             })
             return true
         } catch (e) {
-            logger.error(e)
+            reportError(e)
         }
         return false
     }

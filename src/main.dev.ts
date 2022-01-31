@@ -14,6 +14,7 @@ import https from 'https'
 import createServer from 'https-localhost'
 import { getCerts } from 'https-localhost/certs'
 import logger from './logging'
+import { reportError } from './utils/resolvers/errors'
 
 createServer()
 
@@ -33,6 +34,6 @@ initApp()
         })
     })
     .catch((e) => {
-        logger.error(e)
+        reportError(e)
         process.exit(-1)
     })

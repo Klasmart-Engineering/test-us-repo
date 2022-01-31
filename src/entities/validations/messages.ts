@@ -1,6 +1,6 @@
 import { ValidationErrorItem } from 'joi'
-import logger from '../../logging'
 import { customErrors } from '../../types/errors/customError'
+import { reportError } from '../../utils/resolvers/errors'
 
 interface ICustomMessage {
     code: string
@@ -110,9 +110,10 @@ export function getCustomConstraintDetails(
                     }
                 }
                 default: {
-                    logger.error(
-                        'Missing custom message for joi regex constraint on property %o',
-                        error.path
+                    reportError(
+                        new Error(
+                            `Missing custom message for joi regex constraint on property ${error.path}`
+                        )
                     )
                     return {
                         code: customErrors.invalid_format.code,
@@ -137,9 +138,10 @@ export function getCustomConstraintDetails(
         }
 
         default: {
-            logger.error(
-                'Missing custom message for joi constraint %s',
-                constraintType
+            reportError(
+                new Error(
+                    `Missing custom message for joi constraint ${constraintType}`
+                )
             )
             return {
                 code: customErrors.invalid_format.code,
