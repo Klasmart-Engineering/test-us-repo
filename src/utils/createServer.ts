@@ -14,6 +14,7 @@ import {
     isMIMETypeTransformer,
 } from '../directives'
 import { loadPlugins } from './plugins'
+import logger from '../logging'
 
 /* accessing a child via a connection field takes 3 depth
     myconnection { // 0
@@ -96,6 +97,7 @@ export const createServer = async (model: Model) => {
 
         plugins: await loadPlugins(),
         formatError: (error) => {
+            logger.error(error)
             if (error.originalError instanceof CustomError) {
                 return { ...error, details: error.originalError.errors }
             }
