@@ -486,7 +486,13 @@ export class Model {
             const role = await this.roleRepository.findOneOrFail({ role_id })
             return role
         } catch (e) {
-            logger.error(e)
+            throw new APIError({
+                code: customErrors.nonexistent_entity.code,
+                message: customErrors.nonexistent_entity.message,
+                variables: ['role_id'],
+                entity: 'Role',
+                entityName: role_id,
+            })
         }
     }
 
