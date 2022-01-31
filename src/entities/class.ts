@@ -25,6 +25,8 @@ import { Subject } from './subject'
 import { SHORTCODE_DEFAULT_MAXLEN, validateShortCode } from '../utils/shortcode'
 import { CustomBaseEntity } from './customBaseEntity'
 import logger from '../logging'
+import { APIError } from '../types/errors/apiError'
+import { customErrors } from '../types/errors/customError'
 
 @Entity()
 @Check(`"class_name" <> ''`)
