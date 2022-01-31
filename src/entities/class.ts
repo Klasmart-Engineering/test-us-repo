@@ -293,19 +293,32 @@ export class Class extends CustomBaseEntity {
             PermissionName.delete_teacher_from_class_20446
         )
 
-        try {
-            const user = await getRepository(User).findOneOrFail({ user_id })
-            const classes = (await user.classesTeaching) || []
-            user.classesTeaching = Promise.resolve(
-                classes.filter(({ class_id }) => class_id !== this.class_id)
-            )
-            await user.save()
+        const user = await getRepository(User)
+            .findOneOrFail({ user_id })
+            .catch((e) => {
+                throw new APIError({
+                    code: customErrors.nonexistent_entity.code,
+                    message: customErrors.nonexistent_entity.message,
+                    variables: ['user_id'],
+                    entity: 'User',
+                    entityName: user_id,
+                })
+            })
+        const classes = (await user.classesTeaching) || []
+        user.classesTeaching = Promise.resolve(
+            classes.filter(({ class_id }) => class_id !== this.class_id)
+        )
+        await user.save().catch((e) => {
+            const message = e instanceof Error ? e.message : 'Unknown Error'
+            throw new APIError({
+                code: customErrors.database_save_error.code,
+                message: customErrors.database_save_error.message,
+                variables: [message],
+                entity: 'User',
+            })
+        })
 
-            return true
-        } catch (e) {
-            logger.error(e)
-        }
-        return false
+        return true
     }
 
     public async editStudents(
