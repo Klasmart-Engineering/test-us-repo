@@ -309,6 +309,7 @@ export class Class extends CustomBaseEntity {
             classes.filter(({ class_id }) => class_id !== this.class_id)
         )
         await user.save().catch((e) => {
+            logger.error(e)
             const message = e instanceof Error ? e.message : 'Unknown Error'
             throw new APIError({
                 code: customErrors.database_save_error.code,
