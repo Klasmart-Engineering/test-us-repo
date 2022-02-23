@@ -48,6 +48,9 @@ export class OrganizationMembership extends CustomBaseEntity {
     @ManyToMany(() => Role, (role) => role.memberships)
     public roles?: Promise<Role[]>
 
+    @Column({ type: 'timestamp', nullable: true, precision: 3 })
+    public status_updated_at?: Date
+
     public async schoolMemberships(
         { permission_name }: { permission_name: string },
         context: Context,
