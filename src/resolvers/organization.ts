@@ -556,6 +556,7 @@ export class ReactivateUsersFromOrganizations extends ChangeOrganizationMembersh
     protected inputTypeName = 'reactivateUsersFromOrganizationInput'
     protected readonly partialEntity = {
         status: Status.ACTIVE,
+        status_updated_at: new Date(),
     }
 
     authorize(): Promise<void> {
@@ -578,6 +579,7 @@ export class RemoveUsersFromOrganizations extends ChangeOrganizationMembershipSt
     protected readonly partialEntity = {
         status: Status.INACTIVE,
         deleted_at: new Date(),
+        status_updated_at: new Date(),
     }
     authorize(): Promise<void> {
         return this.permissions.rejectIfNotAllowed(
@@ -596,6 +598,8 @@ export class DeleteUsersFromOrganizations extends ChangeOrganizationMembershipSt
     protected inputTypeName = 'deleteUsersFromOrganizationInput'
     protected readonly partialEntity = {
         status: Status.DELETED,
+        deleted_at: new Date(),
+        status_updated_at: new Date(),
     }
     authorize(): Promise<void> {
         return this.permissions.rejectIfNotAllowed(
