@@ -598,7 +598,6 @@ export class DeleteUsersFromOrganizations extends ChangeOrganizationMembershipSt
     protected inputTypeName = 'deleteUsersFromOrganizationInput'
     protected readonly partialEntity = {
         status: Status.DELETED,
-        deleted_at: new Date(),
         status_updated_at: new Date(),
     }
     authorize(): Promise<void> {
