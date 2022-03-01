@@ -16,7 +16,7 @@ import { UserPermissions } from '../../../../src/permissions/userPermissions'
 import { createAdminUser } from '../../../utils/testEntities'
 import { CreateEntityRowCallback } from '../../../../src/types/csv/createEntityRowCallback'
 import { CSVError } from '../../../../src/types/csv/csvError'
-import { processUserFromCSVRow } from '../../../../src/utils/csv/user'
+import { processUserFromCSVRows } from '../../../../src/utils/csv/user'
 
 use(chaiAsPromised)
 
@@ -90,7 +90,7 @@ describe('read file', () => {
                             )
                         },
                     },
-                    [processUserFromCSVRow],
+                    [processUserFromCSVRows],
                     adminPermissions
                 )
                 expect(false).to.eq(true) // should never reach here
