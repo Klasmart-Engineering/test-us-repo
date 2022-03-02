@@ -42,11 +42,18 @@ export const processUserFromCSVRows: CreateEntityRowCallback<UserRow> = async (
     console.time('batch process time')
 
     const allRowErrors = []
+    // const users = []
+    // const classes = []
+    // const orgMemberships = []
+    // const schoolMemberships = []
     for (const [index, row] of rows.entries()) {
-        // TODO: return entities instead of saving them inside the function
-        // so that can be saved in bulk
-
-        const rowErrors = await processUserFromCSVRow(
+        const {
+            rowErrors,
+            // user,
+            // cls,
+            // schoolMembership,
+            // organizationMembership,
+        } = await processUserFromCSVRow(
             manager,
             row,
             rowNumber + index,
@@ -54,9 +61,26 @@ export const processUserFromCSVRows: CreateEntityRowCallback<UserRow> = async (
             userPermissions,
             queryResultCache
         )
+        // if (user !== undefined) {
+        //     users.push(user)
+        // }
+        // if (cls !== undefined) {
+        //     classes.push(cls)
+        // }
+        // if (organizationMembership !== undefined) {
+        //     orgMemberships.push(organizationMembership)
+        // }
+        // if (schoolMembership !== undefined) {
+        //     schoolMemberships.push(schoolMembership)
+        // }
         allRowErrors.push(...rowErrors)
     }
     console.timeEnd('batch process time')
+    // await manager.save(users)
+    // await manager.save(orgMemberships)
+    // await manager.save(schoolMemberships)
+    // await manager.save(classes)
+
     return allRowErrors
 }
 
@@ -67,7 +91,13 @@ export const processUserFromCSVRow = async (
     fileErrors: CSVError[],
     userPermissions: UserPermissions,
     queryResultCache: QueryResultCache
-) => {
+): Promise<{
+    rowErrors: CSVError[]
+    user?: User
+    organizationMembership?: OrganizationMembership
+    cls?: Class
+    schoolMembership?: SchoolMembership
+}> => {
     const rowErrors: CSVError[] = []
     // First check static validation constraints
     const validationErrors = validateRow(row, rowNumber, userRowValidation)
@@ -75,7 +105,7 @@ export const processUserFromCSVRow = async (
 
     // Return if there are any validation errors so that we don't need to waste any DB queries
     if (rowErrors.length > 0) {
-        return rowErrors
+        return { rowErrors }
     }
 
     // Now check dynamic constraints
@@ -110,7 +140,7 @@ export const processUserFromCSVRow = async (
                     entityName: row.organization_name,
                 }
             )
-            return rowErrors
+            return { rowErrors }
         }
 
         // And is the user authorized to upload to this org?
@@ -132,7 +162,7 @@ export const processUserFromCSVRow = async (
                 }
             )
             // AD-1721: Added because validation process should not reveal validity of other entities after this point if client user unauthorized. Discussed with Charlie (PM).
-            return rowErrors
+            return { rowErrors }
         }
 
         // Update the cache
@@ -304,7 +334,7 @@ export const processUserFromCSVRow = async (
     }
 
     if (rowErrors.length > 0) {
-        return rowErrors
+        return { rowErrors }
     }
 
     const rawEmail = row.user_email
@@ -320,6 +350,8 @@ export const processUserFromCSVRow = async (
         family_name: row.user_family_name,
     }
 
+    // todo: this needs to check previous row users to
+    // even though they're not in the db yet
     let user = await manager.findOne(User, {
         where: [
             {
@@ -404,7 +436,7 @@ export const processUserFromCSVRow = async (
 
     // never save if there are any errors in the file
     if (fileErrors.length > 0 || rowErrors.length > 0) {
-        return rowErrors
+        return { rowErrors }
     }
 
     await manager.save(user)
@@ -440,6 +472,8 @@ export const processUserFromCSVRow = async (
 
     await manager.save(organizationMembership)
 
+    // let schoolMembership: SchoolMembership | undefined
+
     if (school) {
         let schoolMembership = await manager.findOne(SchoolMembership, {
             where: {
@@ -459,6 +493,13 @@ export const processUserFromCSVRow = async (
     }
 
     if (cls) {
+        // todo: we already have the roles
+        // from organizationMembership.roles
+        // so join from those straight to perms instead
+        // and filter them at a sql level as well
+        // this relies on any roles added to this user on previous lines
+        // being saved to the db already by now
+        // or else we'll have to search them in ts
         const perms = await manager
             .createQueryBuilder(Permission, 'Permission')
             .innerJoin('Permission.roles', 'Role')
@@ -472,6 +513,12 @@ export const processUserFromCSVRow = async (
                     organization_id: organizationMembership.organization_id,
                 }
             )
+            // .andWhere('Permission.permission_id IN (:permission_ids)', {
+            //     permission_ids: [
+            //         PermissionName.attend_live_class_as_a_teacher_186,
+            //         PermissionName.attend_live_class_as_a_student_187,
+            //     ],
+            // })
             .getMany()
 
         const teacherPerm =
@@ -501,7 +548,10 @@ export const processUserFromCSVRow = async (
                 cls.students = Promise.resolve(students)
             }
         }
+        // todo: in the new user case we should instead
+        // check the permissions of the role provided in csv
         if (!studentPerm && !teacherPerm) {
+            //} && !isNewUser) {
             addCsvError(
                 rowErrors,
                 customErrors.unauthorized_upload_child.code,
@@ -514,10 +564,12 @@ export const processUserFromCSVRow = async (
                     parentName: row.class_name,
                 }
             )
+            //todo: alternativly we could set cls to undefined
+            return { rowErrors }
         } else {
             await manager.save(cls)
         }
     }
 
-    return rowErrors
+    return { rowErrors } //, cls, user, organizationMembership, schoolMembership }
 }

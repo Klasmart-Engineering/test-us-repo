@@ -20,7 +20,7 @@ import { processUserFromCSVRows } from '../../../../src/utils/csv/user'
 
 use(chaiAsPromised)
 
-describe('read file', () => {
+describe.only('read file', () => {
     let connection: TestConnection
     let testClient: ApolloServerTestClient
     let adminPermissions: UserPermissions
@@ -74,7 +74,7 @@ describe('read file', () => {
     })
 
     context('when there are dynamic constraint errors in multiple rows', () => {
-        it("validates all rows and doesn't terminate after the first", async () => {
+        it.only("validates all rows and doesn't terminate after the first", async () => {
             try {
                 await readCSVFile(
                     connection.manager,
@@ -95,6 +95,8 @@ describe('read file', () => {
                 )
                 expect(false).to.eq(true) // should never reach here
             } catch (e) {
+                console.log('peeeeeeeew')
+                console.log(e)
                 const errors: CSVError[] = e as CSVError[]
                 expect(errors.length).to.eq(2)
                 expect(errors[0].row).to.eq(1)
