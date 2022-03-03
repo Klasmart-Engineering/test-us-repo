@@ -9,7 +9,13 @@ export class AddStatusUpdatedAtColumn1645635790974
             `ALTER TABLE "school_membership" ADD "status_updated_at" TIMESTAMP(3)`
         )
         await queryRunner.query(
+            `UPDATE "school_membership" SET "status_updated_at" = "deleted_at"`
+        )
+        await queryRunner.query(
             `ALTER TABLE "organization_membership" ADD "status_updated_at" TIMESTAMP(3)`
+        )
+        await queryRunner.query(
+            `UPDATE "organization_membership" SET "status_updated_at" = "deleted_at"`
         )
     }
 

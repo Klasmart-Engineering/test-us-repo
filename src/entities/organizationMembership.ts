@@ -7,6 +7,7 @@ import {
     ManyToMany,
     getRepository,
     getManager,
+    EntityManager,
 } from 'typeorm'
 import { User } from './user'
 import { Organization } from './organization'
@@ -287,5 +288,16 @@ export class OrganizationMembership extends CustomBaseEntity {
             reportError(e)
         }
         return false
+    }
+
+    // Temporarily added because status_updated_at temporarily applies to org and school memberships
+    // https://calmisland.atlassian.net/browse/AD-2005
+    public async inactivate(manager?: EntityManager) {
+        if (this.status !== Status.ACTIVE) return
+
+        this.status = Status.INACTIVE
+        this.status_updated_at = new Date()
+
+        if (manager) await manager.save(this)
     }
 }
