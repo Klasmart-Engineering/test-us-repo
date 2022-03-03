@@ -56,7 +56,7 @@ describe('AddStatusUpdatedAtColumn1645635790974 migration', () => {
         ).to.be.rejectedWith('column "status_updated_at" does not exist')
 
         // Insert pre-migration org membership
-        await baseConnection.manager.query(
+        await runner.query(
             `INSERT INTO "organization_membership"("created_at", "updated_at", "deleted_at", "status", "user_id", "organization_id", "join_timestamp", "shortcode", "userUserId", "organizationOrganizationId") VALUES (DEFAULT, DEFAULT, '${deletedAtDate.toISOString()}', DEFAULT, '${
                 user.user_id
             }', '${
@@ -84,7 +84,7 @@ describe('AddStatusUpdatedAtColumn1645635790974 migration', () => {
             false,
             'migrations'
         )
-        // await migrationsConnection.runMigrations()
+        await migrationsConnection.runMigrations()
 
         //expect(orgMemb.status_updated_at).to.eq(deletedAtDate)
     })
