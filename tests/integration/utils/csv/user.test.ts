@@ -23,7 +23,7 @@ import { OrganizationMembership } from '../../../../src/entities/organizationMem
 import { Role } from '../../../../src/entities/role'
 import { School } from '../../../../src/entities/school'
 import { SchoolMembership } from '../../../../src/entities/schoolMembership'
-import { processUserFromCSVRow } from '../../../../src/utils/csv/user'
+import { processUserFromCSVRows } from '../../../../src/utils/csv/user'
 import { CSVError } from '../../../../src/types/csv/csvError'
 import {
     createNonAdminUser,
@@ -146,9 +146,9 @@ describe.only('processUserFromCSVRow', async () => {
 
     it("doesn't save the user if validation fails", async () => {
         row.user_email = 'abc'
-        const { rowErrors } = await processUserFromCSVRow(
+        const rowErrors = await processUserFromCSVRows(
             connection.manager,
-            row,
+            [row],
             1,
             [],
             adminPermissions,
@@ -164,9 +164,9 @@ describe.only('processUserFromCSVRow', async () => {
 
     context('org permissions', () => {
         async function processUsers() {
-            return await processUserFromCSVRow(
+            return await processUserFromCSVRows(
                 connection.manager,
-                row,
+                [row],
                 1,
                 [],
                 new UserPermissions({
@@ -179,7 +179,7 @@ describe.only('processUserFromCSVRow', async () => {
         context('organization does not exist', () => {
             it('errors with nonexistent_entity', async () => {
                 row.organization_name = 'Non-existent org'
-                const { rowErrors } = await processUsers()
+                const rowErrors = await processUsers()
                 const err = rowErrors[0]
                 expect(err.code).to.eq(customErrors.nonexistent_entity.code)
             })
@@ -192,7 +192,7 @@ describe.only('processUserFromCSVRow', async () => {
         })
         context('org exists but user is not a member', () => {
             it('errors with nonexistent_entity', async () => {
-                const { rowErrors } = await processUsers()
+                const rowErrors = await processUsers()
                 const err = rowErrors[0]
                 expect(err.code).to.eq(customErrors.nonexistent_entity.code)
             })
@@ -211,7 +211,7 @@ describe.only('processUserFromCSVRow', async () => {
                         organization.organization_id,
                         getAdminAuthToken()
                     )
-                    const { rowErrors } = await processUsers()
+                    const rowErrors = await processUsers()
                     const err = rowErrors[0]
                     expect(err.code).to.eq(
                         customErrors.unauthorized_org_upload.code
@@ -237,7 +237,7 @@ describe.only('processUserFromCSVRow', async () => {
                         organization.organization_id,
                         role.role_id
                     )
-                    const { rowErrors } = await processUsers()
+                    const rowErrors = await processUsers()
                     expect(rowErrors).to.be.empty
                     expect(
                         queryResultCache.validatedOrgs.get(
@@ -277,7 +277,7 @@ describe.only('processUserFromCSVRow', async () => {
                 row.school_name = undefined
                 row.class_name = undefined
 
-                const { rowErrors } = await processUsers()
+                const rowErrors = await processUsers()
                 expect(rowErrors).to.be.empty
             })
         })
@@ -297,16 +297,14 @@ describe.only('processUserFromCSVRow', async () => {
         })
         it('errors when missing', async () => {
             ;(row as any).organization_name = null
-            rowErrors = (
-                await processUserFromCSVRow(
-                    connection.manager,
-                    row,
-                    1,
-                    [],
-                    adminPermissions,
-                    queryResultCache
-                )
-            ).rowErrors
+            rowErrors = await processUserFromCSVRows(
+                connection.manager,
+                [row],
+                1,
+                [],
+                adminPermissions,
+                queryResultCache
+            )
             err = rowErrors[0]
             expect(err.code).to.eq(
                 customErrors.missing_required_entity_attribute.code
@@ -315,16 +313,14 @@ describe.only('processUserFromCSVRow', async () => {
         })
         it('errors when blank', async () => {
             row.organization_name = ''
-            rowErrors = (
-                await processUserFromCSVRow(
-                    connection.manager,
-                    row,
-                    1,
-                    [],
-                    adminPermissions,
-                    queryResultCache
-                )
-            ).rowErrors
+            rowErrors = await processUserFromCSVRows(
+                connection.manager,
+                [row],
+                1,
+                [],
+                adminPermissions,
+                queryResultCache
+            )
             err = rowErrors[0]
             expect(err.code).to.eq(
                 customErrors.missing_required_entity_attribute.code
@@ -335,16 +331,14 @@ describe.only('processUserFromCSVRow', async () => {
             row.organization_name = 'a'.repeat(
                 config.limits.ORGANIZATION_NAME_MAX_LENGTH + 1
             )
-            rowErrors = (
-                await processUserFromCSVRow(
-                    connection.manager,
-                    row,
-                    1,
-                    [],
-                    adminPermissions,
-                    queryResultCache
-                )
-            ).rowErrors
+            rowErrors = await processUserFromCSVRows(
+                connection.manager,
+                [row],
+                1,
+                [],
+                adminPermissions,
+                queryResultCache
+            )
             err = rowErrors[0]
 
             expect(err.code).to.eq(customErrors.invalid_max_length.code)
@@ -353,16 +347,14 @@ describe.only('processUserFromCSVRow', async () => {
         })
         it("errors when doesn't exist", async () => {
             row.organization_name = 'None Existing Org'
-            rowErrors = (
-                await processUserFromCSVRow(
-                    connection.manager,
-                    row,
-                    1,
-                    [],
-                    adminPermissions,
-                    queryResultCache
-                )
-            ).rowErrors
+            rowErrors = await processUserFromCSVRows(
+                connection.manager,
+                [row],
+                1,
+                [],
+                adminPermissions,
+                queryResultCache
+            )
             err = rowErrors[0]
             expect(err.code).to.eq(customErrors.nonexistent_entity.code)
             expect(queryResultCache.validatedOrgs.size).to.equal(0)
@@ -383,16 +375,14 @@ describe.only('processUserFromCSVRow', async () => {
         })
         it('errors when missing', async () => {
             ;(row as any).user_given_name = null
-            rowErrors = (
-                await processUserFromCSVRow(
-                    connection.manager,
-                    row,
-                    1,
-                    [],
-                    adminPermissions,
-                    queryResultCache
-                )
-            ).rowErrors
+            rowErrors = await processUserFromCSVRows(
+                connection.manager,
+                [row],
+                1,
+                [],
+                adminPermissions,
+                queryResultCache
+            )
             err = rowErrors[0]
             expect(err.code).to.eq(
                 customErrors.missing_required_entity_attribute.code
@@ -400,16 +390,14 @@ describe.only('processUserFromCSVRow', async () => {
         })
         it('errors when blank', async () => {
             row.user_given_name = ''
-            rowErrors = (
-                await processUserFromCSVRow(
-                    connection.manager,
-                    row,
-                    1,
-                    [],
-                    adminPermissions,
-                    queryResultCache
-                )
-            ).rowErrors
+            rowErrors = await processUserFromCSVRows(
+                connection.manager,
+                [row],
+                1,
+                [],
+                adminPermissions,
+                queryResultCache
+            )
             err = rowErrors[0]
             expect(err.code).to.eq(
                 customErrors.missing_required_entity_attribute.code
@@ -419,32 +407,28 @@ describe.only('processUserFromCSVRow', async () => {
             row.user_given_name = 'a'.repeat(
                 config.limits.USER_GIVEN_NAME_MAX_LENGTH + 1
             )
-            rowErrors = (
-                await processUserFromCSVRow(
-                    connection.manager,
-                    row,
-                    1,
-                    [],
-                    adminPermissions,
-                    queryResultCache
-                )
-            ).rowErrors
+            rowErrors = await processUserFromCSVRows(
+                connection.manager,
+                [row],
+                1,
+                [],
+                adminPermissions,
+                queryResultCache
+            )
             err = rowErrors[0]
             expect(err.code).to.eq(customErrors.invalid_max_length.code)
             expect(err.max).to.eq(config.limits.USER_GIVEN_NAME_MAX_LENGTH)
         })
         it('errors when invalid characters', async () => {
             row.user_given_name = '(ben)'
-            rowErrors = (
-                await processUserFromCSVRow(
-                    connection.manager,
-                    row,
-                    1,
-                    [],
-                    adminPermissions,
-                    queryResultCache
-                )
-            ).rowErrors
+            rowErrors = await processUserFromCSVRows(
+                connection.manager,
+                [row],
+                1,
+                [],
+                adminPermissions,
+                queryResultCache
+            )
 
             err = rowErrors[0]
             expect(rowErrors.length).to.eq(1)
@@ -468,16 +452,14 @@ describe.only('processUserFromCSVRow', async () => {
         })
         it('errors when missing', async () => {
             ;(row as any).user_family_name = null
-            rowErrors = (
-                await processUserFromCSVRow(
-                    connection.manager,
-                    row,
-                    1,
-                    [],
-                    adminPermissions,
-                    queryResultCache
-                )
-            ).rowErrors
+            rowErrors = await processUserFromCSVRows(
+                connection.manager,
+                [row],
+                1,
+                [],
+                adminPermissions,
+                queryResultCache
+            )
             err = rowErrors[0]
             expect(err.code).to.eq(
                 customErrors.missing_required_entity_attribute.code
@@ -485,16 +467,14 @@ describe.only('processUserFromCSVRow', async () => {
         })
         it('errors when blank', async () => {
             row.user_family_name = ''
-            rowErrors = (
-                await processUserFromCSVRow(
-                    connection.manager,
-                    row,
-                    1,
-                    [],
-                    adminPermissions,
-                    queryResultCache
-                )
-            ).rowErrors
+            rowErrors = await processUserFromCSVRows(
+                connection.manager,
+                [row],
+                1,
+                [],
+                adminPermissions,
+                queryResultCache
+            )
             err = rowErrors[0]
             expect(err.code).to.eq(
                 customErrors.missing_required_entity_attribute.code
@@ -504,32 +484,28 @@ describe.only('processUserFromCSVRow', async () => {
             row.user_family_name = 'a'.repeat(
                 config.limits.USER_FAMILY_NAME_MAX_LENGTH + 1
             )
-            rowErrors = (
-                await processUserFromCSVRow(
-                    connection.manager,
-                    row,
-                    1,
-                    [],
-                    adminPermissions,
-                    queryResultCache
-                )
-            ).rowErrors
+            rowErrors = await processUserFromCSVRows(
+                connection.manager,
+                [row],
+                1,
+                [],
+                adminPermissions,
+                queryResultCache
+            )
             const err = rowErrors[0]
             expect(err.code).to.eq(customErrors.invalid_max_length.code)
             expect(err.max).to.eq(config.limits.USER_FAMILY_NAME_MAX_LENGTH)
         })
         it('errors when invalid characters', async () => {
             row.user_family_name = '(ben)'
-            rowErrors = (
-                await processUserFromCSVRow(
-                    connection.manager,
-                    row,
-                    1,
-                    [],
-                    adminPermissions,
-                    queryResultCache
-                )
-            ).rowErrors
+            rowErrors = await processUserFromCSVRows(
+                connection.manager,
+                [row],
+                1,
+                [],
+                adminPermissions,
+                queryResultCache
+            )
             err = rowErrors[0]
             expect(err.code).to.eq(
                 customErrors.invalid_alphanumeric_special.code
@@ -546,16 +522,14 @@ describe.only('processUserFromCSVRow', async () => {
                 '01/01/2020',
             ]) {
                 row.user_date_of_birth = date_of_birth
-                const rowErrors: CSVError[] = (
-                    await processUserFromCSVRow(
-                        connection.manager,
-                        row,
-                        1,
-                        [],
-                        adminPermissions,
-                        queryResultCache
-                    )
-                ).rowErrors
+                const rowErrors: CSVError[] = await processUserFromCSVRows(
+                    connection.manager,
+                    [row],
+                    1,
+                    [],
+                    adminPermissions,
+                    queryResultCache
+                )
 
                 const err = rowErrors[0]
                 expect(rowErrors.length).to.eq(1)
@@ -588,48 +562,42 @@ describe.only('processUserFromCSVRow', async () => {
             ;(row as any).user_username = null
             ;(row as any).user_email = null
             row.user_phone = '+4400000000000'
-            rowErrors = (
-                await processUserFromCSVRow(
-                    connection.manager,
-                    row,
-                    1,
-                    [],
-                    adminPermissions,
-                    queryResultCache
-                )
-            ).rowErrors
+            rowErrors = await processUserFromCSVRows(
+                connection.manager,
+                [row],
+                1,
+                [],
+                adminPermissions,
+                queryResultCache
+            )
             expect(rowErrors).to.be.empty
         })
         it('is not required if email is provided', async () => {
             ;(row as any).user_username = null
             ;(row as any).user_phone = null
             row.user_email = 'something@somewhere.com'
-            rowErrors = (
-                await processUserFromCSVRow(
-                    connection.manager,
-                    row,
-                    1,
-                    [],
-                    adminPermissions,
-                    queryResultCache
-                )
-            ).rowErrors
+            rowErrors = await processUserFromCSVRows(
+                connection.manager,
+                [row],
+                1,
+                [],
+                adminPermissions,
+                queryResultCache
+            )
             expect(rowErrors).to.be.empty
         })
         it('errors when username, email and phone are missing', async () => {
             ;(row as any).user_username = null
             ;(row as any).user_phone = null
             ;(row as any).user_email = null
-            rowErrors = (
-                await processUserFromCSVRow(
-                    connection.manager,
-                    row,
-                    1,
-                    [],
-                    adminPermissions,
-                    queryResultCache
-                )
-            ).rowErrors
+            rowErrors = await processUserFromCSVRows(
+                connection.manager,
+                [row],
+                1,
+                [],
+                adminPermissions,
+                queryResultCache
+            )
             err = rowErrors[0]
             expect(rowErrors.length).to.eq(1)
             expect(err.code).to.eq(customErrors.missing_required_either.code)
@@ -638,16 +606,14 @@ describe.only('processUserFromCSVRow', async () => {
             ;(row as any).user_username = 'a'.repeat(
                 config.limits.USERNAME_MAX_LENGTH + 1
             )
-            rowErrors = (
-                await processUserFromCSVRow(
-                    connection.manager,
-                    row,
-                    1,
-                    [],
-                    adminPermissions,
-                    queryResultCache
-                )
-            ).rowErrors
+            rowErrors = await processUserFromCSVRows(
+                connection.manager,
+                [row],
+                1,
+                [],
+                adminPermissions,
+                queryResultCache
+            )
             err = rowErrors[0]
 
             expect(err.code).to.eq(customErrors.invalid_max_length.code)
@@ -656,32 +622,28 @@ describe.only('processUserFromCSVRow', async () => {
         })
         it('errors with ERR_INVALID_USERNAME when the regex fails', async () => {
             ;(row as any).user_username = '🐮'
-            rowErrors = (
-                await processUserFromCSVRow(
-                    connection.manager,
-                    row,
-                    1,
-                    [],
-                    adminPermissions,
-                    queryResultCache
-                )
-            ).rowErrors
+            rowErrors = await processUserFromCSVRows(
+                connection.manager,
+                [row],
+                1,
+                [],
+                adminPermissions,
+                queryResultCache
+            )
             err = rowErrors[0]
             expect(rowErrors.length).to.eq(1)
             expect(err.code).to.eq(customErrors.invalid_username.code)
         })
         it('allows underscores', async () => {
             ;(row as any).user_username = 'p_user_name'
-            rowErrors = (
-                await processUserFromCSVRow(
-                    connection.manager,
-                    row,
-                    1,
-                    [],
-                    adminPermissions,
-                    queryResultCache
-                )
-            ).rowErrors
+            rowErrors = await processUserFromCSVRows(
+                connection.manager,
+                [row],
+                1,
+                [],
+                adminPermissions,
+                queryResultCache
+            )
             expect(rowErrors).to.be.empty
         })
     })
@@ -700,16 +662,14 @@ describe.only('processUserFromCSVRow', async () => {
         })
         it('errors when missing', async () => {
             ;(row as any).user_gender = null
-            rowErrors = (
-                await processUserFromCSVRow(
-                    connection.manager,
-                    row,
-                    1,
-                    [],
-                    adminPermissions,
-                    queryResultCache
-                )
-            ).rowErrors
+            rowErrors = await processUserFromCSVRows(
+                connection.manager,
+                [row],
+                1,
+                [],
+                adminPermissions,
+                queryResultCache
+            )
             err = rowErrors[0]
             expect(err.code).to.eq(
                 customErrors.missing_required_entity_attribute.code
@@ -717,16 +677,14 @@ describe.only('processUserFromCSVRow', async () => {
         })
         it('errors when blank', async () => {
             row.user_gender = ''
-            rowErrors = (
-                await processUserFromCSVRow(
-                    connection.manager,
-                    row,
-                    1,
-                    [],
-                    adminPermissions,
-                    queryResultCache
-                )
-            ).rowErrors
+            rowErrors = await processUserFromCSVRows(
+                connection.manager,
+                [row],
+                1,
+                [],
+                adminPermissions,
+                queryResultCache
+            )
             err = rowErrors[0]
             expect(err.code).to.eq(
                 customErrors.missing_required_entity_attribute.code
@@ -734,47 +692,41 @@ describe.only('processUserFromCSVRow', async () => {
         })
         it('errors when too short', async () => {
             row.user_gender = 'a'
-            rowErrors = (
-                await processUserFromCSVRow(
-                    connection.manager,
-                    row,
-                    1,
-                    [],
-                    adminPermissions,
-                    queryResultCache
-                )
-            ).rowErrors
+            rowErrors = await processUserFromCSVRows(
+                connection.manager,
+                [row],
+                1,
+                [],
+                adminPermissions,
+                queryResultCache
+            )
             err = rowErrors[0]
             expect(err.code).to.eq(customErrors.invalid_min_length.code)
         })
         it('errors when too long', async () => {
             row.user_gender = 'a'.repeat(config.limits.GENDER_MAX_LENGTH + 1)
-            rowErrors = (
-                await processUserFromCSVRow(
-                    connection.manager,
-                    row,
-                    1,
-                    [],
-                    adminPermissions,
-                    queryResultCache
-                )
-            ).rowErrors
+            rowErrors = await processUserFromCSVRows(
+                connection.manager,
+                [row],
+                1,
+                [],
+                adminPermissions,
+                queryResultCache
+            )
             err = rowErrors[0]
             expect(err.code).to.eq(customErrors.invalid_max_length.code)
             expect(err.max).to.eq(config.limits.GENDER_MAX_LENGTH)
         })
         it('errors when invalid characters', async () => {
             row.user_gender = '(ben)'
-            rowErrors = (
-                await processUserFromCSVRow(
-                    connection.manager,
-                    row,
-                    1,
-                    [],
-                    adminPermissions,
-                    queryResultCache
-                )
-            ).rowErrors
+            rowErrors = await processUserFromCSVRows(
+                connection.manager,
+                [row],
+                1,
+                [],
+                adminPermissions,
+                queryResultCache
+            )
             err = rowErrors[0]
             expect(err.code).to.eq(
                 customErrors.invalid_alphanumeric_special.code
@@ -800,31 +752,27 @@ describe.only('processUserFromCSVRow', async () => {
         it('is not required if phone is provided', async () => {
             ;(row as any).user_email = null
             row.user_phone = '+4400000000000'
-            rowErrors = (
-                await processUserFromCSVRow(
-                    connection.manager,
-                    row,
-                    1,
-                    [],
-                    adminPermissions,
-                    queryResultCache
-                )
-            ).rowErrors
+            rowErrors = await processUserFromCSVRows(
+                connection.manager,
+                [row],
+                1,
+                [],
+                adminPermissions,
+                queryResultCache
+            )
             expect(rowErrors).to.be.empty
         })
         it('errors when too long', async () => {
             row.user_email =
                 'a'.repeat(config.limits.EMAIL_MAX_LENGTH + 1) + '@x.com'
-            rowErrors = (
-                await processUserFromCSVRow(
-                    connection.manager,
-                    row,
-                    1,
-                    [],
-                    adminPermissions,
-                    queryResultCache
-                )
-            ).rowErrors
+            rowErrors = await processUserFromCSVRows(
+                connection.manager,
+                [row],
+                1,
+                [],
+                adminPermissions,
+                queryResultCache
+            )
             err = rowErrors[0]
             expect(rowErrors.length).to.eq(1)
             expect(err.code).to.eq(customErrors.invalid_max_length.code)
@@ -838,16 +786,14 @@ describe.only('processUserFromCSVRow', async () => {
             ]) {
                 rowErrors = []
                 row.user_email = email
-                rowErrors = (
-                    await processUserFromCSVRow(
-                        connection.manager,
-                        row,
-                        1,
-                        [],
-                        adminPermissions,
-                        queryResultCache
-                    )
-                ).rowErrors
+                rowErrors = await processUserFromCSVRows(
+                    connection.manager,
+                    [row],
+                    1,
+                    [],
+                    adminPermissions,
+                    queryResultCache
+                )
                 err = rowErrors[0]
                 expect(rowErrors.length).to.eq(1)
                 expect(err.code).to.eq(customErrors.invalid_email.code)
@@ -861,16 +807,14 @@ describe.only('processUserFromCSVRow', async () => {
             const processedEmail = normalizedLowercaseTrimmed(unprocessedEmail)
             row.user_email = unprocessedEmail
 
-            rowErrors = (
-                await processUserFromCSVRow(
-                    connection.manager,
-                    row,
-                    1,
-                    [],
-                    adminPermissions,
-                    queryResultCache
-                )
-            ).rowErrors
+            rowErrors = await processUserFromCSVRows(
+                connection.manager,
+                [row],
+                1,
+                [],
+                adminPermissions,
+                queryResultCache
+            )
             expect(rowErrors).to.be.empty
 
             const dbUser = await User.findOneOrFail({
@@ -894,16 +838,14 @@ describe.only('processUserFromCSVRow', async () => {
                 role.role_id
             )
 
-            rowErrors = (
-                await processUserFromCSVRow(
-                    connection.manager,
-                    row,
-                    1,
-                    [],
-                    adminPermissions,
-                    queryResultCache
-                )
-            ).rowErrors
+            rowErrors = await processUserFromCSVRows(
+                connection.manager,
+                [row],
+                1,
+                [],
+                adminPermissions,
+                queryResultCache
+            )
             expect(rowErrors).to.be.empty
 
             const dbUsers = await User.find({
@@ -921,16 +863,14 @@ describe.only('processUserFromCSVRow', async () => {
                 '+521234567891011121314151617181920',
             ]) {
                 row.user_phone = phone
-                const rowErrors = (
-                    await processUserFromCSVRow(
-                        connection.manager,
-                        row,
-                        1,
-                        [],
-                        adminPermissions,
-                        queryResultCache
-                    )
-                ).rowErrors
+                const rowErrors = await processUserFromCSVRows(
+                    connection.manager,
+                    [row],
+                    1,
+                    [],
+                    adminPermissions,
+                    queryResultCache
+                )
                 const err = rowErrors[0]
                 expect(rowErrors.length).to.eq(1)
                 expect(err.column).to.eq('user_phone')
@@ -960,16 +900,14 @@ describe.only('processUserFromCSVRow', async () => {
         it('errors when too long', async () => {
             row.user_alternate_email =
                 'a'.repeat(config.limits.EMAIL_MAX_LENGTH + 1) + '@x.com'
-            rowErrors = (
-                await processUserFromCSVRow(
-                    connection.manager,
-                    row,
-                    1,
-                    [],
-                    adminPermissions,
-                    queryResultCache
-                )
-            ).rowErrors
+            rowErrors = await processUserFromCSVRows(
+                connection.manager,
+                [row],
+                1,
+                [],
+                adminPermissions,
+                queryResultCache
+            )
             err = rowErrors[0]
             expect(rowErrors.length).to.eq(1)
             expect(err.code).to.eq(customErrors.invalid_max_length.code)
@@ -983,16 +921,14 @@ describe.only('processUserFromCSVRow', async () => {
             ]) {
                 rowErrors = []
                 row.user_alternate_email = email
-                rowErrors = (
-                    await processUserFromCSVRow(
-                        connection.manager,
-                        row,
-                        1,
-                        [],
-                        adminPermissions,
-                        queryResultCache
-                    )
-                ).rowErrors
+                rowErrors = await processUserFromCSVRows(
+                    connection.manager,
+                    [row],
+                    1,
+                    [],
+                    adminPermissions,
+                    queryResultCache
+                )
                 err = rowErrors[0]
                 expect(rowErrors.length).to.eq(1)
                 expect(err.code).to.eq(customErrors.invalid_email.code)
@@ -1006,16 +942,14 @@ describe.only('processUserFromCSVRow', async () => {
             const processedEmail = normalizedLowercaseTrimmed(unprocessedEmail)
             row.user_alternate_email = unprocessedEmail
 
-            rowErrors = (
-                await processUserFromCSVRow(
-                    connection.manager,
-                    row,
-                    1,
-                    [],
-                    adminPermissions,
-                    queryResultCache
-                )
-            ).rowErrors
+            rowErrors = await processUserFromCSVRows(
+                connection.manager,
+                [row],
+                1,
+                [],
+                adminPermissions,
+                queryResultCache
+            )
             expect(rowErrors).to.be.empty
 
             const dbUser = await User.findOneOrFail({
@@ -1033,16 +967,14 @@ describe.only('processUserFromCSVRow', async () => {
                 '+521234567891011121314151617181920',
             ]) {
                 row.user_alternate_phone = phone
-                const rowErrors = (
-                    await processUserFromCSVRow(
-                        connection.manager,
-                        row,
-                        1,
-                        [],
-                        adminPermissions,
-                        queryResultCache
-                    )
-                ).rowErrors
+                const rowErrors = await processUserFromCSVRows(
+                    connection.manager,
+                    [row],
+                    1,
+                    [],
+                    adminPermissions,
+                    queryResultCache
+                )
                 const err = rowErrors[0]
                 expect(rowErrors.length).to.eq(1)
                 expect(err.column).to.eq('user_alternate_phone')
@@ -1070,16 +1002,14 @@ describe.only('processUserFromCSVRow', async () => {
             row.user_shortcode = 'a'.repeat(
                 config.limits.SHORTCODE_MAX_LENGTH + 1
             )
-            rowErrors = (
-                await processUserFromCSVRow(
-                    connection.manager,
-                    row,
-                    1,
-                    [],
-                    adminPermissions,
-                    queryResultCache
-                )
-            ).rowErrors
+            rowErrors = await processUserFromCSVRows(
+                connection.manager,
+                [row],
+                1,
+                [],
+                adminPermissions,
+                queryResultCache
+            )
 
             err = rowErrors[0]
             expect(err.code).to.eq(customErrors.invalid_max_length.code)
@@ -1091,16 +1021,14 @@ describe.only('processUserFromCSVRow', async () => {
             for (const shortcode of ['de/f', '$abc', '@1234']) {
                 rowErrors = []
                 row.user_shortcode = shortcode
-                rowErrors = (
-                    await processUserFromCSVRow(
-                        connection.manager,
-                        row,
-                        1,
-                        [],
-                        adminPermissions,
-                        queryResultCache
-                    )
-                ).rowErrors
+                rowErrors = await processUserFromCSVRows(
+                    connection.manager,
+                    [row],
+                    1,
+                    [],
+                    adminPermissions,
+                    queryResultCache
+                )
                 err = rowErrors[0]
                 expect(err.code).to.eq(customErrors.invalid_alphanumeric.code)
                 expect(err.entity).to.eq('User')
@@ -1125,16 +1053,14 @@ describe.only('processUserFromCSVRow', async () => {
 
             row.user_shortcode = orgMembership.shortcode
 
-            rowErrors = (
-                await processUserFromCSVRow(
-                    connection.manager,
-                    row,
-                    1,
-                    [],
-                    adminPermissions,
-                    queryResultCache
-                )
-            ).rowErrors
+            rowErrors = await processUserFromCSVRows(
+                connection.manager,
+                [row],
+                1,
+                [],
+                adminPermissions,
+                queryResultCache
+            )
             err = rowErrors[0]
             expect(err.code).to.eq(customErrors.existent_entity.code)
             expect(err.entity).to.eq('Short Code')
@@ -1157,16 +1083,14 @@ describe.only('processUserFromCSVRow', async () => {
         })
         it('errors when missing', async () => {
             ;(row as any).organization_role_name = null
-            rowErrors = (
-                await processUserFromCSVRow(
-                    connection.manager,
-                    row,
-                    1,
-                    [],
-                    adminPermissions,
-                    queryResultCache
-                )
-            ).rowErrors
+            rowErrors = await processUserFromCSVRows(
+                connection.manager,
+                [row],
+                1,
+                [],
+                adminPermissions,
+                queryResultCache
+            )
 
             err = rowErrors[0]
             expect(err.code).to.eq(
@@ -1176,16 +1100,14 @@ describe.only('processUserFromCSVRow', async () => {
         })
         it('errors when blank', async () => {
             row.organization_role_name = ''
-            rowErrors = (
-                await processUserFromCSVRow(
-                    connection.manager,
-                    row,
-                    1,
-                    [],
-                    adminPermissions,
-                    queryResultCache
-                )
-            ).rowErrors
+            rowErrors = await processUserFromCSVRows(
+                connection.manager,
+                [row],
+                1,
+                [],
+                adminPermissions,
+                queryResultCache
+            )
 
             err = rowErrors[0]
             expect(err.code).to.eq(
@@ -1199,16 +1121,14 @@ describe.only('processUserFromCSVRow', async () => {
             row.organization_role_name = 'a'.repeat(
                 config.limits.ROLE_NAME_MAX_LENGTH + 1
             )
-            rowErrors = (
-                await processUserFromCSVRow(
-                    connection.manager,
-                    row,
-                    1,
-                    [],
-                    adminPermissions,
-                    queryResultCache
-                )
-            ).rowErrors
+            rowErrors = await processUserFromCSVRows(
+                connection.manager,
+                [row],
+                1,
+                [],
+                adminPermissions,
+                queryResultCache
+            )
 
             err = rowErrors[0]
             expect(err.code).to.eq(customErrors.invalid_max_length.code)
@@ -1219,16 +1139,14 @@ describe.only('processUserFromCSVRow', async () => {
         })
         it('errors when nonexistent', async () => {
             row.organization_role_name = 'Non existing role'
-            rowErrors = (
-                await processUserFromCSVRow(
-                    connection.manager,
-                    row,
-                    1,
-                    [],
-                    adminPermissions,
-                    queryResultCache
-                )
-            ).rowErrors
+            rowErrors = await processUserFromCSVRows(
+                connection.manager,
+                [row],
+                1,
+                [],
+                adminPermissions,
+                queryResultCache
+            )
 
             err = rowErrors[0]
             expect(err.code).to.eq(customErrors.nonexistent_child.code)
@@ -1256,16 +1174,14 @@ describe.only('processUserFromCSVRow', async () => {
                 row.school_name = 'a'.repeat(
                     config.limits.SCHOOL_NAME_MAX_LENGTH + 1
                 )
-                rowErrors = (
-                    await processUserFromCSVRow(
-                        connection.manager,
-                        row,
-                        1,
-                        [],
-                        adminPermissions,
-                        queryResultCache
-                    )
-                ).rowErrors
+                rowErrors = await processUserFromCSVRows(
+                    connection.manager,
+                    [row],
+                    1,
+                    [],
+                    adminPermissions,
+                    queryResultCache
+                )
 
                 err = rowErrors[0]
                 expect(err.code).to.eq(customErrors.invalid_max_length.code)
@@ -1277,16 +1193,14 @@ describe.only('processUserFromCSVRow', async () => {
             it('errors when doesnt exist', async () => {
                 row.school_name = 'Non existing school'
                 row.class_name = undefined
-                rowErrors = (
-                    await processUserFromCSVRow(
-                        connection.manager,
-                        row,
-                        1,
-                        [],
-                        adminPermissions,
-                        queryResultCache
-                    )
-                ).rowErrors
+                rowErrors = await processUserFromCSVRows(
+                    connection.manager,
+                    [row],
+                    1,
+                    [],
+                    adminPermissions,
+                    queryResultCache
+                )
 
                 err = rowErrors[0]
                 expect(err.code).to.eq(customErrors.nonexistent_child.code)
@@ -1304,16 +1218,14 @@ describe.only('processUserFromCSVRow', async () => {
                 await connection.manager.save(wrongSchool)
 
                 row.school_name = wrongSchool.school_name
-                rowErrors = (
-                    await processUserFromCSVRow(
-                        connection.manager,
-                        row,
-                        1,
-                        [],
-                        adminPermissions,
-                        queryResultCache
-                    )
-                ).rowErrors
+                rowErrors = await processUserFromCSVRows(
+                    connection.manager,
+                    [row],
+                    1,
+                    [],
+                    adminPermissions,
+                    queryResultCache
+                )
 
                 err = rowErrors[0]
                 expect(err.code).to.eq(customErrors.nonexistent_child.code)
@@ -1369,26 +1281,22 @@ describe.only('processUserFromCSVRow', async () => {
             }
 
             // Run multiple rows to update query result cache
-            rowErrors = (
-                await processUserFromCSVRow(
-                    connection.manager,
-                    row,
-                    1,
-                    [],
-                    adminPermissions,
-                    queryResultCache
-                )
-            ).rowErrors
-            rowErrors = (
-                await processUserFromCSVRow(
-                    connection.manager,
-                    row2,
-                    2,
-                    [],
-                    adminPermissions,
-                    queryResultCache
-                )
-            ).rowErrors
+            rowErrors = await processUserFromCSVRows(
+                connection.manager,
+                [row],
+                1,
+                [],
+                adminPermissions,
+                queryResultCache
+            )
+            rowErrors = await processUserFromCSVRows(
+                connection.manager,
+                [row2],
+                2,
+                [],
+                adminPermissions,
+                queryResultCache
+            )
 
             expect(queryResultCache.validatedSchools.size).to.eq(2)
         })
@@ -1396,16 +1304,14 @@ describe.only('processUserFromCSVRow', async () => {
 
     it(`does not validate school_role_name column`, async () => {
         // Fix for UD-738, which removes `school_role_name` handling added on original story KL-4408
-        const rowErrors = (
-            await processUserFromCSVRow(
-                connection.manager,
-                { ...row, school_role_name: `Nonexistant Role` } as UserRow,
-                1,
-                [],
-                adminPermissions,
-                queryResultCache
-            )
-        ).rowErrors
+        const rowErrors = await processUserFromCSVRows(
+            connection.manager,
+            [{ ...row, school_role_name: `Nonexistant Role` } as UserRow],
+            1,
+            [],
+            adminPermissions,
+            queryResultCache
+        )
 
         expect(rowErrors).to.be.empty
     })
@@ -1426,16 +1332,14 @@ describe.only('processUserFromCSVRow', async () => {
                 row.class_name = 'a'.repeat(
                     config.limits.CLASS_NAME_MAX_LENGTH + 1
                 )
-                rowErrors = (
-                    await processUserFromCSVRow(
-                        connection.manager,
-                        row,
-                        1,
-                        [],
-                        adminPermissions,
-                        queryResultCache
-                    )
-                ).rowErrors
+                rowErrors = await processUserFromCSVRows(
+                    connection.manager,
+                    [row],
+                    1,
+                    [],
+                    adminPermissions,
+                    queryResultCache
+                )
 
                 err = rowErrors[0]
                 expect(err.code).to.eq(customErrors.invalid_max_length.code)
@@ -1446,16 +1350,14 @@ describe.only('processUserFromCSVRow', async () => {
             })
             it('errors when doesnt exist', async () => {
                 row.class_name = 'Non existing class'
-                rowErrors = (
-                    await processUserFromCSVRow(
-                        connection.manager,
-                        row,
-                        1,
-                        [],
-                        adminPermissions,
-                        queryResultCache
-                    )
-                ).rowErrors
+                rowErrors = await processUserFromCSVRows(
+                    connection.manager,
+                    [row],
+                    1,
+                    [],
+                    adminPermissions,
+                    queryResultCache
+                )
 
                 err = rowErrors[0]
                 expect(err.code).to.eq(customErrors.nonexistent_child.code)
@@ -1467,16 +1369,14 @@ describe.only('processUserFromCSVRow', async () => {
             })
             it('errors when class is assigned to a school and school is missing', async () => {
                 row.school_name = undefined
-                rowErrors = (
-                    await processUserFromCSVRow(
-                        connection.manager,
-                        row,
-                        1,
-                        [],
-                        adminPermissions,
-                        queryResultCache
-                    )
-                ).rowErrors
+                rowErrors = await processUserFromCSVRows(
+                    connection.manager,
+                    [row],
+                    1,
+                    [],
+                    adminPermissions,
+                    queryResultCache
+                )
 
                 err = rowErrors[0]
                 expect(err.code).to.eq(customErrors.nonexistent_child.code)
@@ -1534,26 +1434,22 @@ describe.only('processUserFromCSVRow', async () => {
             }
 
             // Run multiple rows to update query result cache
-            rowErrors = (
-                await processUserFromCSVRow(
-                    connection.manager,
-                    row,
-                    1,
-                    [],
-                    adminPermissions,
-                    queryResultCache
-                )
-            ).rowErrors
-            rowErrors = (
-                await processUserFromCSVRow(
-                    connection.manager,
-                    row2,
-                    2,
-                    [],
-                    adminPermissions,
-                    queryResultCache
-                )
-            ).rowErrors
+            rowErrors = await processUserFromCSVRows(
+                connection.manager,
+                [row],
+                1,
+                [],
+                adminPermissions,
+                queryResultCache
+            )
+            rowErrors = await processUserFromCSVRows(
+                connection.manager,
+                [row2],
+                2,
+                [],
+                adminPermissions,
+                queryResultCache
+            )
 
             expect(queryResultCache.validatedClasses.size).to.eq(2)
         })
@@ -1577,9 +1473,9 @@ describe.only('processUserFromCSVRow', async () => {
         }
 
         const processRow = async () =>
-            processUserFromCSVRow(
+            processUserFromCSVRows(
                 connection.manager,
-                row,
+                [row],
                 1,
                 [],
                 adminPermissions,
@@ -1587,7 +1483,7 @@ describe.only('processUserFromCSVRow', async () => {
             )
 
         async function processAndReturnUser(expectedErrorCode = '') {
-            const rowErrors = (await processRow()).rowErrors
+            const rowErrors = await processRow()
             if (expectedErrorCode) {
                 expect(rowErrors.length).to.eq(1)
                 expect(rowErrors[0].code).to.eq(expectedErrorCode)
@@ -1617,16 +1513,14 @@ describe.only('processUserFromCSVRow', async () => {
         }
 
         it('creates the user and its respective links', async () => {
-            const rowErrors = (
-                await processUserFromCSVRow(
-                    connection.manager,
-                    row,
-                    1,
-                    [],
-                    adminPermissions,
-                    queryResultCache
-                )
-            ).rowErrors
+            const rowErrors = await processUserFromCSVRows(
+                connection.manager,
+                [row],
+                1,
+                [],
+                adminPermissions,
+                queryResultCache
+            )
 
             const dbUser = await User.findOneOrFail({
                 where: { email: normalizedLowercaseTrimmed(row.user_email) },
@@ -1656,16 +1550,14 @@ describe.only('processUserFromCSVRow', async () => {
 
         it('it does not update SchoolMembership.roles based on `school_role_name` column', async () => {
             // Fix for UD-738, which removes `school_role_name` handling added on original story KL-4408
-            const rowErrors = (
-                await processUserFromCSVRow(
-                    connection.manager,
-                    { ...row, school_role_name: role.role_name } as UserRow,
-                    1,
-                    [],
-                    adminPermissions,
-                    queryResultCache
-                )
-            ).rowErrors
+            const rowErrors = await processUserFromCSVRows(
+                connection.manager,
+                [{ ...row, school_role_name: role.role_name } as UserRow],
+                1,
+                [],
+                adminPermissions,
+                queryResultCache
+            )
 
             const dbUser = await User.findOneOrFail({
                 where: { email: normalizedLowercaseTrimmed(row.user_email) },
@@ -1682,16 +1574,14 @@ describe.only('processUserFromCSVRow', async () => {
             const cls2 = createClass([], organization)
             await connection.manager.save(cls2)
             row.class_name = cls2.class_name
-            const rowErrors = (
-                await processUserFromCSVRow(
-                    connection.manager,
-                    row,
-                    1,
-                    [],
-                    adminPermissions,
-                    queryResultCache
-                )
-            ).rowErrors
+            const rowErrors = await processUserFromCSVRows(
+                connection.manager,
+                [row],
+                1,
+                [],
+                adminPermissions,
+                queryResultCache
+            )
 
             expect(rowErrors).to.be.empty
 
@@ -1708,16 +1598,14 @@ describe.only('processUserFromCSVRow', async () => {
 
         it('it does not update SchoolMembership.roles based on `school_role_name` column', async () => {
             // Fix for UD-738, which removes `school_role_name` handling added on original story KL-4408
-            const rowErrors = (
-                await processUserFromCSVRow(
-                    connection.manager,
-                    { ...row, school_role_name: role.role_name } as UserRow,
-                    1,
-                    [],
-                    adminPermissions,
-                    queryResultCache
-                )
-            ).rowErrors
+            const rowErrors = await processUserFromCSVRows(
+                connection.manager,
+                [{ ...row, school_role_name: role.role_name } as UserRow],
+                1,
+                [],
+                adminPermissions,
+                queryResultCache
+            )
 
             const dbUser = await User.findOneOrFail({
                 where: { email: normalizedLowercaseTrimmed(row.user_email) },
@@ -1731,9 +1619,9 @@ describe.only('processUserFromCSVRow', async () => {
         })
 
         it('the query result cache updates with validated entities', async () => {
-            const _ = await processUserFromCSVRow(
+            const _ = await processUserFromCSVRows(
                 connection.manager,
-                row,
+                [row],
                 1,
                 [],
                 adminPermissions,
@@ -1776,7 +1664,7 @@ describe.only('processUserFromCSVRow', async () => {
             )
 
             it('raises an UNAUTHORIZED_UPLOAD_CHILD_ENTITY error against the Role column', async () => {
-                const rowErrors = (await processRow()).rowErrors
+                const rowErrors = await processRow()
                 expect(rowErrors).to.have.length(1)
                 expect(
                     pick(rowErrors[0], ['code', 'message', 'column'])
@@ -1850,16 +1738,14 @@ describe.only('processUserFromCSVRow', async () => {
                 })
 
                 it('creates the user', async () => {
-                    const rowErrors = (
-                        await processUserFromCSVRow(
-                            connection.manager,
-                            row,
-                            1,
-                            [],
-                            adminPermissions,
-                            queryResultCache
-                        )
-                    ).rowErrors
+                    const rowErrors = await processUserFromCSVRows(
+                        connection.manager,
+                        [row],
+                        1,
+                        [],
+                        adminPermissions,
+                        queryResultCache
+                    )
 
                     const dbUser = await User.findOneOrFail({
                         where: {
@@ -1888,9 +1774,9 @@ describe.only('processUserFromCSVRow', async () => {
 
             it('creates the user', async () => {
                 //const { user: dbUser } =
-                await processUserFromCSVRow(
+                await processUserFromCSVRows(
                     connection.manager,
-                    row,
+                    [row],
                     1,
                     [],
                     adminPermissions,
@@ -1952,16 +1838,14 @@ describe.only('processUserFromCSVRow', async () => {
             })
 
             it("doesn't duplicate users", async () => {
-                let rowErrors = (
-                    await processUserFromCSVRow(
-                        connection.manager,
-                        row,
-                        1,
-                        [],
-                        adminPermissions,
-                        queryResultCache
-                    )
-                ).rowErrors
+                let rowErrors = await processUserFromCSVRows(
+                    connection.manager,
+                    [row],
+                    1,
+                    [],
+                    adminPermissions,
+                    queryResultCache
+                )
                 let dbUsers = await User.find({
                     where: { email: row.user_email },
                 })
@@ -1973,16 +1857,14 @@ describe.only('processUserFromCSVRow', async () => {
                 existentUser.phone = '+123456789'
                 await existentUser.save()
 
-                rowErrors = (
-                    await processUserFromCSVRow(
-                        connection.manager,
-                        row,
-                        1,
-                        [],
-                        adminPermissions,
-                        queryResultCache
-                    )
-                ).rowErrors
+                rowErrors = await processUserFromCSVRows(
+                    connection.manager,
+                    [row],
+                    1,
+                    [],
+                    adminPermissions,
+                    queryResultCache
+                )
                 dbUsers = await User.find({
                     where: { email: row.user_email },
                 })
@@ -2048,12 +1930,14 @@ describe.only('processUserFromCSVRow', async () => {
 
                     it('if new shortcode, should update ', async () => {
                         const newShortcode = `OTHER01`
-                        await processUserFromCSVRow(
+                        await processUserFromCSVRows(
                             connection.manager,
-                            {
-                                ...row,
-                                user_shortcode: newShortcode,
-                            },
+                            [
+                                {
+                                    ...row,
+                                    user_shortcode: newShortcode,
+                                },
+                            ],
                             1,
                             [],
                             adminPermissions,
@@ -2073,12 +1957,14 @@ describe.only('processUserFromCSVRow', async () => {
 
                     it("if empty shortcode, doesn't update shortcode but updates D.O.B, gender, roles, schools and classes", async () => {
                         // Fix: UD-844
-                        await processUserFromCSVRow(
+                        await processUserFromCSVRows(
                             connection.manager,
-                            {
-                                ...row,
-                                user_shortcode: undefined,
-                            },
+                            [
+                                {
+                                    ...row,
+                                    user_shortcode: undefined,
+                                },
+                            ],
                             1,
                             [],
                             adminPermissions,

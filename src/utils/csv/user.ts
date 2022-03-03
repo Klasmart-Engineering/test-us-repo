@@ -21,7 +21,7 @@ import { CreateEntityHeadersCallback } from '../../types/csv/createEntityHeaders
 import clean from '../clean'
 import { Permission } from '../../entities/permission'
 import { config } from '../../config/config'
-import { objectToKey } from '../stringUtils'
+import { objectToKey, ObjMap } from '../stringUtils'
 
 export const validateUserCSVHeaders: CreateEntityHeadersCallback = async (
     headers: (keyof UserRow)[],
@@ -46,6 +46,9 @@ export const processUserFromCSVRows: CreateEntityRowCallback<UserRow> = async (
     // const classes = []
     // const orgMemberships = []
     // const schoolMemberships = []
+
+    const usersFound = await getUsers(rows, manager, rowNumber)
+
     for (const [index, row] of rows.entries()) {
         const {
             rowErrors,
@@ -59,7 +62,8 @@ export const processUserFromCSVRows: CreateEntityRowCallback<UserRow> = async (
             rowNumber + index,
             fileErrors,
             userPermissions,
-            queryResultCache
+            queryResultCache,
+            usersFound
         )
         // if (user !== undefined) {
         //     users.push(user)
@@ -84,13 +88,89 @@ export const processUserFromCSVRows: CreateEntityRowCallback<UserRow> = async (
     return allRowErrors
 }
 
+async function getUsers(
+    rows: Pick<
+        UserRow,
+        | 'user_username'
+        | 'user_given_name'
+        | 'user_family_name'
+        | 'user_email'
+        | 'user_phone'
+        | 'user_username'
+    >[],
+    manager: EntityManager,
+    startingRowNum: number
+): Promise<Map<number, User>> {
+    const givenNames = rows.map((r) => r.user_given_name)
+    const familyNames = rows.map((r) => r.user_family_name)
+
+    const users = await manager.find(User, {
+        where: [
+            {
+                given_name: In(givenNames),
+                family_name: In(familyNames),
+            },
+        ],
+    })
+
+    const usersFromDb = new ObjMap<
+        { givenName?: string; familyName?: string },
+        User[]
+    >()
+
+    for (const user of users) {
+        const key: { givenName?: string; familyName?: string } = {}
+        if (user.given_name) {
+            key.givenName = user.given_name
+        }
+        if (user.family_name) {
+            key.familyName = user.family_name
+        }
+        const matches = usersFromDb.get(key) || []
+        matches.push(user)
+        usersFromDb.set(key, matches)
+    }
+
+    const foundUsers = new Map()
+
+    for (const [index, row] of rows.entries()) {
+        const key: { givenName?: string; familyName?: string } = {}
+        if (row.user_given_name) {
+            key.givenName = row.user_given_name
+        }
+        if (row.user_family_name) {
+            key.familyName = row.user_family_name
+        }
+        const usersWhoMatchByName = usersFromDb.get(key)
+        // search for both the normalized and raw value.
+        // only need to do this because we were previously saving the raw
+        // value instead of the normalized value.
+        // this could be removed if a DB migration was run to normalize all email values.
+        foundUsers.set(
+            startingRowNum + index,
+            usersWhoMatchByName
+                ?.filter(
+                    (u) =>
+                        u.email === row.user_email ||
+                        clean.email(u.email) === row.user_email ||
+                        u.phone === row.user_phone ||
+                        u.username === row.user_username
+                )
+                .pop()
+        )
+    }
+
+    return foundUsers
+}
+
 export const processUserFromCSVRow = async (
     manager: EntityManager,
     row: UserRow,
     rowNumber: number,
     fileErrors: CSVError[],
     userPermissions: UserPermissions,
-    queryResultCache: QueryResultCache
+    queryResultCache: QueryResultCache,
+    usersFound: Map<number, User>
 ): Promise<{
     rowErrors: CSVError[]
     user?: User
@@ -337,7 +417,6 @@ export const processUserFromCSVRow = async (
         return { rowErrors }
     }
 
-    const rawEmail = row.user_email
     row.user_email = clean.email(row.user_email) || undefined
     // we don't need to catch errors here
     // as its already pass validation
@@ -345,27 +424,8 @@ export const processUserFromCSVRow = async (
     row.user_phone = clean.phone(row.user_phone) || undefined
     row.user_gender = row.user_gender?.toLowerCase()
 
-    const personalInfo = {
-        given_name: row.user_given_name,
-        family_name: row.user_family_name,
-    }
+    let user = usersFound.get(rowNumber)
 
-    // todo: this needs to check previous row users to
-    // even though they're not in the db yet
-    let user = await manager.findOne(User, {
-        where: [
-            {
-                // search for both the normalized and raw value.
-                // only need to do this because we were previously saving the raw
-                // value instead of the normalized value.
-                // this could be removed if a DB migration was run to normalize all email values.
-                email: In([rawEmail, clean.email(rawEmail)]),
-                ...personalInfo,
-            },
-            { phone: row.user_phone, ...personalInfo },
-            { username: row.user_username, ...personalInfo },
-        ],
-    })
     let isNewUser = false
     if (!user) {
         user = new User()
