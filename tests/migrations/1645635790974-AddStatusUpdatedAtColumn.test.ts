@@ -39,10 +39,6 @@ describe('AddStatusUpdatedAtColumn1645635790974 migration', () => {
         const pendingMigrations = await baseConnection.showMigrations()
         expect(pendingMigrations).to.eq(false)
         await migrationsConnection?.close()
-
-        // Clear data from tables before next test
-        await runner.query(`DELETE FROM "organization_membership";`)
-        await runner.query(`DELETE FROM "school_membership";`)
     })
 
     beforeEach(async () => {
