@@ -1151,9 +1151,9 @@ describe('processUserFromCSVRow', async () => {
             err = rowErrors[0]
             expect(err.code).to.eq(customErrors.nonexistent_child.code)
             expect(err.entity).to.eq('Organization Role')
-            expect(err.entityName).to.eq(row.organization_role_name)
+            expect(err.entityId).to.eq(row.organization_role_name)
             expect(err.parentEntity).to.eq('Organization')
-            expect(err.parentName).to.eq(row.organization_name)
+            expect(err.parentId).to.eq(row.organization_name)
             expect(queryResultCache.validatedOrgRoles.size).to.equal(0)
         })
     })
@@ -1205,9 +1205,9 @@ describe('processUserFromCSVRow', async () => {
                 err = rowErrors[0]
                 expect(err.code).to.eq(customErrors.nonexistent_child.code)
                 expect(err.entity).to.eq('School')
-                expect(err.entityName).to.eq(row.school_name)
+                expect(err.entityId).to.eq(row.school_name)
                 expect(err.parentEntity).to.eq('Organization')
-                expect(err.parentName).to.eq(row.organization_name)
+                expect(err.parentId).to.eq(row.organization_name)
                 expect(queryResultCache.validatedSchools.size).to.equal(0)
             })
 
@@ -1230,9 +1230,9 @@ describe('processUserFromCSVRow', async () => {
                 err = rowErrors[0]
                 expect(err.code).to.eq(customErrors.nonexistent_child.code)
                 expect(err.entity).to.eq('School')
-                expect(err.entityName).to.eq(row.school_name)
+                expect(err.entityId).to.eq(row.school_name)
                 expect(err.parentEntity).to.eq('Organization')
-                expect(err.parentName).to.eq(row.organization_name)
+                expect(err.parentId).to.eq(row.organization_name)
                 expect(queryResultCache.validatedSchools.size).to.equal(0)
             })
         })
@@ -1362,9 +1362,9 @@ describe('processUserFromCSVRow', async () => {
                 err = rowErrors[0]
                 expect(err.code).to.eq(customErrors.nonexistent_child.code)
                 expect(err.entity).to.eq('Class')
-                expect(err.entityName).to.eq(row.class_name)
+                expect(err.entityId).to.eq(row.class_name)
                 expect(err.parentEntity).to.eq('School')
-                expect(err.parentName).to.eq(row.school_name)
+                expect(err.parentId).to.eq(row.school_name)
                 expect(queryResultCache.validatedClasses.size).to.equal(0)
             })
             it('errors when class is assigned to a school and school is missing', async () => {
@@ -1381,9 +1381,9 @@ describe('processUserFromCSVRow', async () => {
                 err = rowErrors[0]
                 expect(err.code).to.eq(customErrors.nonexistent_child.code)
                 expect(err.entity).to.eq('Class')
-                expect(err.entityName).to.eq(row.class_name)
+                expect(err.entityId).to.eq(row.class_name)
                 expect(err.parentEntity).to.eq('School')
-                expect(err.parentName).to.eq('')
+                expect(err.parentId).to.eq('')
                 expect(queryResultCache.validatedClasses.size).to.equal(0)
             })
         })
