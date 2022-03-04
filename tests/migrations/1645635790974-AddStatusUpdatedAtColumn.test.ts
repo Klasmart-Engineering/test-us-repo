@@ -91,11 +91,11 @@ describe('AddStatusUpdatedAtColumn1645635790974 migration', () => {
         )
         // Insert pre-migration school membership
         await runner.query(
-            `INSERT INTO "school_membership"("created_at", "updated_at", "deleted_at", "status", "user_id", "school_id", "join_timestamp", "shortcode", "userUserId", "schoolSchoolId") VALUES (DEFAULT, DEFAULT, '${deletedAtDate.toISOString()}', DEFAULT, '${
+            `INSERT INTO "school_membership"("created_at", "updated_at", "deleted_at", "status", "user_id", "school_id", "join_timestamp", "userUserId", "schoolSchoolId") VALUES (DEFAULT, DEFAULT, '${deletedAtDate.toISOString()}', DEFAULT, '${
                 user.user_id
-            }', '${school.school_id}', DEFAULT, '${generateShortCode(
-                user.user_id
-            )}', '${user.user_id}', '${school.school_id}');`
+            }', '${school.school_id}', DEFAULT, '${user.user_id}', '${
+                school.school_id
+            }');`
         )
 
         migrationsConnection = await createMigrationsTestConnection(
