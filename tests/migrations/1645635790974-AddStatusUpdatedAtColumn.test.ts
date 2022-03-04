@@ -13,6 +13,8 @@ import chaiAsPromised from 'chai-as-promised'
 import { generateShortCode } from '../../src/utils/shortcode'
 import { AddStatusUpdatedAtColumn1645635790974 } from '../../migrations/1645635790974-AddStatusUpdatedAtColumn'
 import { SchoolMembership } from '../../src/entities/schoolMembership'
+import { School } from '../../src/entities/school'
+import { createSchool } from '../factories/school.factory'
 
 use(chaiAsPromised)
 
@@ -23,7 +25,7 @@ describe('AddStatusUpdatedAtColumn1645635790974 migration', () => {
 
     let user: User
     let organization: Organization
-    let orgMemb: OrganizationMembership
+    let school: School
     const deletedAtDate: Date = new Date()
 
     before(async () => {
@@ -37,11 +39,26 @@ describe('AddStatusUpdatedAtColumn1645635790974 migration', () => {
         const pendingMigrations = await baseConnection.showMigrations()
         expect(pendingMigrations).to.eq(false)
         await migrationsConnection?.close()
+
+        // Clear data from tables before next test
+        await runner.query(`DELETE FROM "organization_membership";`)
+        await runner.query(`DELETE FROM "school_membership";`)
     })
 
     beforeEach(async () => {
         user = await createUser().save()
         organization = await createOrganization().save()
+        school = await createSchool(organization).save()
+
+        // Make sure status_updated_at column in orgMemb table is dropped first - simulates pre-migration situation
+        await runner.query(`DELETE FROM "organization_membership";`)
+        await runner.query(`DELETE FROM "school_membership";`)
+        await runner.query(
+            `ALTER TABLE "organization_membership" DROP COLUMN IF EXISTS status_updated_at;`
+        )
+        await runner.query(
+            `ALTER TABLE "school_membership" DROP COLUMN IF EXISTS status_updated_at;`
+        )
     })
 
     const runMigration = async () => {
@@ -52,17 +69,7 @@ describe('AddStatusUpdatedAtColumn1645635790974 migration', () => {
         return migration!.up(runner)
     }
 
-    it('adds and manages a status_updated_at column in the organization membership table', async () => {
-        // Make sure status_updated_at column in orgMemb table is dropped first - simulates pre-migration situation
-        await runner.query(`DELETE FROM "organization_membership";`)
-        await runner.query(`DELETE FROM "school_membership";`)
-        await runner.query(
-            `ALTER TABLE "organization_membership" DROP COLUMN IF EXISTS status_updated_at;`
-        )
-        await runner.query(
-            `ALTER TABLE "school_membership" DROP COLUMN IF EXISTS status_updated_at;`
-        )
-
+    it('adds a status_updated_at column and copies over deleted_at data in the school and organization membership tables', async () => {
         await expect(
             getRepository(OrganizationMembership)
                 .createQueryBuilder()
@@ -86,6 +93,14 @@ describe('AddStatusUpdatedAtColumn1645635790974 migration', () => {
                 user.user_id
             }', '${organization.organization_id}');`
         )
+        // Insert pre-migration school membership
+        await runner.query(
+            `INSERT INTO "school_membership"("created_at", "updated_at", "deleted_at", "status", "user_id", "school_id", "join_timestamp", "shortcode", "userUserId", "schoolSchoolId") VALUES (DEFAULT, DEFAULT, '${deletedAtDate.toISOString()}', DEFAULT, '${
+                user.user_id
+            }', '${school.school_id}', DEFAULT, '${generateShortCode(
+                user.user_id
+            )}', '${user.user_id}', '${school.school_id}');`
+        )
 
         migrationsConnection = await createMigrationsTestConnection(
             false,
@@ -97,7 +112,11 @@ describe('AddStatusUpdatedAtColumn1645635790974 migration', () => {
         const updatedOrgMemb = await OrganizationMembership.findOne({
             status_updated_at: deletedAtDate,
         })
+        const updatedSchoolMemb = await SchoolMembership.findOne({
+            status_updated_at: deletedAtDate,
+        })
 
         expect(updatedOrgMemb).to.exist
+        expect(updatedSchoolMemb).to.exist
     })
 })

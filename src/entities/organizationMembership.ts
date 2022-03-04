@@ -291,6 +291,7 @@ export class OrganizationMembership extends CustomBaseEntity {
     }
 
     // Temporarily added because status_updated_at temporarily applies to org and school memberships
+    // Note this overrides the inherited method, and deleted_at is being deprecated/not used anymore
     // https://calmisland.atlassian.net/browse/AD-2005
     public async inactivate(manager?: EntityManager) {
         if (this.status !== Status.ACTIVE) return
