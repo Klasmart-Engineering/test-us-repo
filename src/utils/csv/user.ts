@@ -39,6 +39,8 @@ export const processUserFromCSVRows: CreateEntityRowCallback<UserRow> = async (
     userPermissions: UserPermissions,
     queryResultCache: QueryResultCache
 ) => {
+    console.time('batch process time')
+
     const allRowErrors = []
     for (const [index, row] of rows.entries()) {
         // TODO: return entities instead of saving them inside the function
@@ -54,6 +56,7 @@ export const processUserFromCSVRows: CreateEntityRowCallback<UserRow> = async (
         )
         allRowErrors.push(...rowErrors)
     }
+    console.timeEnd('batch process time')
     return allRowErrors
 }
 

@@ -1,10 +1,12 @@
 import { Connection, createConnection, QueryRunner } from 'typeorm'
 import { TypeORMLogger } from '../../src/logging'
 import { getEnvVar } from '../../src/config/config'
+import { max, min, sum } from 'lodash'
 
 class QueryMetricsLogger extends TypeORMLogger {
     private counter = 0
     private wasReset = false
+    private slowStats = new Map<string, number[]>()
 
     logQuery(
         query: string,
@@ -13,6 +15,33 @@ class QueryMetricsLogger extends TypeORMLogger {
     ): void {
         this.counter += 1
         super.logQuery(query, parameters, queryRunner)
+    }
+
+    logQuerySlow(
+        time: number,
+        query: string,
+        parameters?: unknown[],
+        queryRunner?: QueryRunner
+    ) {
+        const stats = this.slowStats.get(query) || []
+        stats.push(time)
+        this.slowStats.set(query, stats)
+        super.logQuerySlow(time, query, parameters, queryRunner)
+    }
+
+    get dumpStats() {
+        const results: { [key: string]: any } = {}
+
+        for (const [query, times] of this.slowStats.entries()) {
+            results[query] = {
+                total: sum(times),
+                mean: sum(times) / times.length,
+                instances: times.length,
+                min: min(times),
+                max: max(times),
+            }
+        }
+        return JSON.stringify(results)
     }
 
     get count(): number {
@@ -27,6 +56,7 @@ class QueryMetricsLogger extends TypeORMLogger {
     reset(): void {
         this.wasReset = true
         this.counter = 0
+        this.slowStats = new Map()
     }
 }
 
@@ -64,6 +94,7 @@ export const createTestConnection = async ({
             },
             slaves: slavesURLList,
         },
+        maxQueryExecutionTime: 1,
     }) as Promise<TestConnection>
 }
 
