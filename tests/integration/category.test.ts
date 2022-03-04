@@ -14,7 +14,7 @@ import { PermissionName } from '../../src/permissions/permissionNames'
 import { UserPermissions } from '../../src/permissions/userPermissions'
 import {
     addSubcategoriesToCategories,
-    createCategories,
+    CreateCategories,
     DeleteCategories,
     removeSubcategoriesFromCategories,
     updateCategories,
@@ -201,8 +201,11 @@ describe('category', () => {
             input: CreateCategoryInput[]
         ) => {
             const permissions = new UserPermissions(userToPayload(user))
-            const ctx = { permissions }
-            const result = await createCategories({ input }, ctx)
+            const result = await mutate(
+                CreateCategories,
+                { input },
+                permissions
+            )
 
             return result
         }
