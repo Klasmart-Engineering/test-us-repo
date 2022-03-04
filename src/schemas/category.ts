@@ -2,11 +2,11 @@ import gql from 'graphql-tag'
 import { Model } from '../model'
 import { Context } from '../main'
 import {
-    createCategories,
     removeSubcategoriesFromCategories,
     updateCategories,
     addSubcategoriesToCategories,
     DeleteCategories,
+    CreateCategories,
 } from '../resolvers/category'
 import { GraphQLSchemaModule } from '../types/schemaModule'
 import { mutate } from '../utils/mutations/commonStructure'
@@ -217,7 +217,7 @@ export default function getDefault(
                 uploadCategoriesFromCSV: (_parent, args, ctx, info) =>
                     model.uploadCategoriesFromCSV(args, ctx, info),
                 createCategories: (_parent, args, ctx, _info) =>
-                    createCategories(args, ctx),
+                    mutate(CreateCategories, args, ctx.permissions),
                 deleteCategories: (_parent, args, ctx, _info) =>
                     mutate(DeleteCategories, args, ctx.permissions),
                 updateCategories: (_parent, args, ctx, _info) =>
