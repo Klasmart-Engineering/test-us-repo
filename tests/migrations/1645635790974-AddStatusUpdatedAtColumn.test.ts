@@ -14,6 +14,8 @@ import { OrganizationMembership } from '../../src/entities/organizationMembershi
 import { User } from '../../src/entities/user'
 import chaiAsPromised from 'chai-as-promised'
 import { generateShortCode } from '../../src/utils/shortcode'
+import { AddStatusUpdatedAtColumn1645635790974 } from '../../migrations/1645635790974-AddStatusUpdatedAtColumn'
+import { SchoolMembership } from '../../src/entities/schoolMembership'
 
 use(chaiAsPromised)
 
@@ -45,11 +47,33 @@ describe('AddStatusUpdatedAtColumn1645635790974 migration', () => {
         organization = await createOrganization().save()
     })
 
+    const runMigration = async () => {
+        const migration = migrationsConnection.migrations.find(
+            (m) => m.name === AddStatusUpdatedAtColumn1645635790974.name
+        )
+        // promise will be rejected if migration fails
+        return migration!.up(runner)
+    }
+
     it('adds and manages a status_updated_at column in the organization membership table', async () => {
-        // Make sure status_updated_at column in orgMemb table is dropped first:
-        // ALTER TABLE "organization_membership" DROP COLUMN status_updated_at
+        // Make sure status_updated_at column in orgMemb table is dropped first - simulates pre-migration situation
+        await runner.query(`DELETE FROM "organization_membership";`)
+        await runner.query(`DELETE FROM "school_membership";`)
+        await runner.query(
+            `ALTER TABLE "organization_membership" DROP COLUMN IF EXISTS status_updated_at;`
+        )
+        await runner.query(
+            `ALTER TABLE "school_membership" DROP COLUMN IF EXISTS status_updated_at;`
+        )
+
         await expect(
             getRepository(OrganizationMembership)
+                .createQueryBuilder()
+                .select('status_updated_at')
+                .getMany()
+        ).to.be.rejectedWith('column "status_updated_at" does not exist')
+        await expect(
+            getRepository(SchoolMembership)
                 .createQueryBuilder()
                 .select('status_updated_at')
                 .getMany()
@@ -66,26 +90,17 @@ describe('AddStatusUpdatedAtColumn1645635790974 migration', () => {
             }', '${organization.organization_id}');`
         )
 
-        // Insert pre-migration org membership
-        // await baseConnection.manager
-        //     .createQueryBuilder()
-        //     .insert()
-        //     .into(OrganizationMembership)
-        //     .values({
-        //         user_id: user.user_id,
-        //         organization_id: organization.organization_id,
-        //         shortcode: generateShortCode(user.user_id),
-        //         deleted_at: deletedAtDate,
-        //     })
-        //     .execute()
-
         migrationsConnection = await createMigrationsTestConnection(
-            true,
+            false,
             false,
             'migrations'
         )
-        await migrationsConnection.runMigrations()
+        await runMigration()
 
-        //expect(orgMemb.status_updated_at).to.eq(deletedAtDate)
+        const updatedOrgMemb = await OrganizationMembership.findOne({
+            status_updated_at: deletedAtDate,
+        })
+
+        expect(updatedOrgMemb).to.exist
     })
 })
