@@ -1222,9 +1222,9 @@ describe('organization', () => {
                             e,
                             {
                                 entity: 'Role',
-                                entityName: nonexistentRoleId,
+                                entityId: nonexistentRoleId,
                                 parentEntity: 'Organization',
-                                parentName: organization.organization_name!,
+                                parentId: organization.organization_id,
                             },
                             ['organization_role_ids']
                         )
@@ -1247,9 +1247,9 @@ describe('organization', () => {
                             e,
                             {
                                 entity: 'Role',
-                                entityName: otherRole.role_id,
+                                entityId: otherRole.role_id,
                                 parentEntity: 'Organization',
-                                parentName: organization.organization_name!,
+                                parentId: organization.organization_id,
                             },
                             ['organization_role_ids']
                         )
@@ -1343,9 +1343,9 @@ describe('organization', () => {
                             e,
                             {
                                 entity: 'Role',
-                                entityName: nonexistentRoleId,
+                                entityId: nonexistentRoleId,
                                 parentEntity: 'Organization',
-                                parentName: organization.organization_name!,
+                                parentId: organization.organization_id,
                             },
                             ['school_role_ids']
                         )
@@ -1369,9 +1369,9 @@ describe('organization', () => {
                             e,
                             {
                                 entity: 'Role',
-                                entityName: otherRole.role_id,
+                                entityId: otherRole.role_id,
                                 parentEntity: 'Organization',
-                                parentName: organization.organization_name!,
+                                parentId: organization.organization_id,
                             },
                             ['school_role_ids']
                         )
@@ -1820,8 +1820,7 @@ describe('organization', () => {
                             expectToBeAPIErrorCollection(e, [
                                 {
                                     code: 'ERR_DUPLICATE_CHILD_ENTITY',
-                                    message:
-                                        'User Joe Bloggs already exists for Organization My Organization.',
+                                    message: `User ${existingUser.user_id} already exists for Organization ${organizationId}.`,
                                     variables: [
                                         'email',
                                         'phone',
@@ -1829,9 +1828,9 @@ describe('organization', () => {
                                         'family_name',
                                     ],
                                     entity: 'User',
-                                    entityName: 'Joe Bloggs',
+                                    entityId: existingUser.user_id,
                                     parentEntity: 'Organization',
-                                    parentName: 'My Organization',
+                                    parentId: organizationId,
                                 },
                             ])
                         })
@@ -1853,8 +1852,7 @@ describe('organization', () => {
                             expectToBeAPIErrorCollection(e, [
                                 {
                                     code: 'ERR_DUPLICATE_CHILD_ENTITY',
-                                    message:
-                                        'User Joe Bloggs already exists for Organization My Organization.',
+                                    message: `User ${existingUser.user_id} already exists for Organization ${organizationId}.`,
                                     variables: [
                                         'email',
                                         'phone',
@@ -1862,9 +1860,9 @@ describe('organization', () => {
                                         'family_name',
                                     ],
                                     entity: 'User',
-                                    entityName: 'Joe Bloggs',
+                                    entityId: existingUser.user_id,
                                     parentEntity: 'Organization',
-                                    parentName: 'My Organization',
+                                    parentId: organizationId,
                                 },
                             ])
                         })
@@ -2001,12 +1999,12 @@ describe('organization', () => {
                             expectToBeAPIErrorCollection(e, [
                                 {
                                     code: 'ERR_DUPLICATE_CHILD_ENTITY',
-                                    message: `OrganizationMembership ${existingMembership.shortcode} already exists for Organization My Organization.`,
+                                    message: `OrganizationMembership ${existingMembership.shortcode} already exists for Organization ${organizationId}.`,
                                     variables: ['shortcode'],
                                     entity: 'OrganizationMembership',
-                                    entityName: existingMembership.shortcode,
+                                    entityId: existingMembership.shortcode,
                                     parentEntity: 'Organization',
-                                    parentName: 'My Organization',
+                                    parentId: organizationId,
                                 },
                             ])
                         })
@@ -2198,9 +2196,9 @@ describe('organization', () => {
                         e,
                         {
                             entity: 'User',
-                            entityName: existingUser.full_name(),
+                            entityId: existingUser.user_id,
                             parentEntity: 'Organization',
-                            parentName: organization.organization_name!,
+                            parentId: organization.organization_id,
                         },
                         ['user_id', 'organization_id']
                     )
@@ -7756,9 +7754,9 @@ describe('organization', () => {
                             res,
                             {
                                 entity: 'User',
-                                entityName: users[0].user_id,
+                                entityId: users[0].user_id,
                                 parentEntity: 'Organization',
-                                parentName: orgs[0].organization_id,
+                                parentId: orgs[0].organization_id,
                                 index: 0,
                             },
                             [''],
