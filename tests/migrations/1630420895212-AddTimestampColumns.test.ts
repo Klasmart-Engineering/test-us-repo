@@ -96,7 +96,9 @@ describe('AddTimestampColumns1630420895212 migration', () => {
             )
         }
     })
-    it('manages deleted_at columns', async () => {
+    // deleted_at is to be deprecated in favour of status_updated_at
+    // See: https://calmisland.atlassian.net/browse/AD-2005
+    xit('manages deleted_at columns', async () => {
         for (const entity of entities) {
             await entity.inactivate(getManager())
             expect(entity.deleted_at?.valueOf()).to.be.greaterThan(
