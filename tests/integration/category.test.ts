@@ -33,6 +33,7 @@ import { createCategory } from '../factories/category.factory'
 import {
     createDuplicateAttributeAPIError,
     createEntityAPIError,
+    createExistentEntityAttributeAPIError,
     createInputLengthAPIError,
     createInputRequiresAtLeastOne,
     createNonExistentOrInactiveEntityAPIError,
@@ -201,7 +202,7 @@ describe('category', () => {
             input: CreateCategoryInput[]
         ) => {
             const permissions = new UserPermissions(userToPayload(user))
-            const result = await mutate(
+            const result: CategoriesMutationResult = await mutate(
                 CreateCategories,
                 { input },
                 permissions
@@ -452,10 +453,9 @@ describe('category', () => {
                         )
 
                         const expectedErrors = Array.from(input, (i, index) =>
-                            createNonExistentOrInactiveEntityAPIError(
+                            createEntityAPIError(
+                                'nonExistent',
                                 index,
-                                ['organization_id'],
-                                'ID',
                                 'Organization',
                                 i.organizationId
                             )
@@ -489,12 +489,11 @@ describe('category', () => {
                         )
 
                         const expectedErrors = Array.from(input, (i, index) =>
-                            createNonExistentOrInactiveEntityAPIError(
+                            createEntityAPIError(
+                                'nonExistent',
                                 index,
-                                ['id'],
-                                'IDs',
                                 'Subcategory',
-                                i.subcategoryIds.toString()
+                                i.subcategoryIds[0]
                             )
                         )
 
@@ -521,7 +520,7 @@ describe('category', () => {
                         (_, index) =>
                             createDuplicateAttributeAPIError(
                                 index + 1,
-                                ['organizationId', 'name'],
+                                ['organizationId, name'],
                                 'CreateCategoryInput'
                             )
                     )
@@ -538,22 +537,25 @@ describe('category', () => {
 
             context('when the category to create already exists', () => {
                 let input: CreateCategoryInput[]
+                let existentCategory: CategoryConnectionNode
 
                 beforeEach(async () => {
                     input = generateInput(1, org1, true)
-                    await createCategoriesFromResolver(admin, input)
+                    const categoriesResult = await createCategoriesFromResolver(
+                        admin,
+                        input
+                    )
+                    existentCategory = categoriesResult.categories[0]
                 })
 
                 it('throws an ErrorCollection', async () => {
                     const expectedErrors = Array.from(input, (i, index) =>
-                        createEntityAPIError(
-                            'existentChild',
-                            index,
+                        createExistentEntityAttributeAPIError(
                             'Category',
+                            existentCategory.id,
+                            'name',
                             i.name,
-                            'Organization',
-                            i.organizationId,
-                            ['organization_id', 'name']
+                            index
                         )
                     )
 
