@@ -408,6 +408,7 @@ export class CreateCategories extends CreateMutation<
             // Checking that the given Subcategories exist in the Organization given by organizationId
             const invalidSubcategoriesInOrg = validateSubItemsInOrg(
                 Subcategory,
+                subcategories.values.map((s) => s.id),
                 index,
                 maps.subcategories,
                 organizationId

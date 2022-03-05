@@ -62,6 +62,7 @@ import { mutate } from '../../src/utils/mutations/commonStructure'
 import { permErrorMeta } from '../utils/errors'
 import { TestConnection } from '../utils/testConnection'
 import { permutations } from '../utils/permute'
+import { v4 as uuidv4 } from 'uuid'
 
 interface CategoryAndSubcategories {
     id: string
@@ -140,6 +141,29 @@ describe('category', () => {
         categoriesTotalCount = await Category.count()
     }
 
+    const generateExistingCategories = async (org: Organization) => {
+        const existingCategory = await createCategory(org).save()
+        const nonPermittedOrgCategory = await createCategory(
+            await createOrganization().save()
+        ).save()
+
+        const inactiveCategory = createCategory(org)
+        inactiveCategory.status = Status.INACTIVE
+        await inactiveCategory.save()
+
+        const inactiveOrg = createOrganization()
+        inactiveOrg.status = Status.INACTIVE
+        await inactiveOrg.save()
+        const inactiveOrgCategory = await createCategory(inactiveOrg).save()
+
+        return [
+            existingCategory,
+            nonPermittedOrgCategory,
+            inactiveCategory,
+            inactiveOrgCategory,
+        ]
+    }
+
     before(() => (connection = getConnection() as TestConnection))
 
     beforeEach(async () => {
@@ -196,7 +220,9 @@ describe('category', () => {
         }).save()
     })
 
-    context('createCategories', () => {
+    context('CreateCategories', () => {
+        let createCategories: CreateCategories
+
         const createCategoriesFromResolver = async (
             user: User,
             input: CreateCategoryInput[]
@@ -297,6 +323,11 @@ describe('category', () => {
             })
         }
 
+        beforeEach(async () => {
+            const permissions = new UserPermissions(userToPayload(admin))
+            createCategories = new CreateCategories([], permissions)
+        })
+
         context('when user is admin', () => {
             it('should create categories in any organization', async () => {
                 const input = [
@@ -319,6 +350,45 @@ describe('category', () => {
             it('should create categories without subcategories', async () => {
                 const input = generateInput(2, org1, false)
                 await expectCategoriesCreated(admin, input)
+            })
+        })
+
+        context('generateEntityMaps', () => {
+            it('returns existing programs', async () => {
+                const existingCategories = await generateExistingCategories(
+                    org1
+                )
+
+                const expectedPairs = await Promise.all(
+                    existingCategories
+                        .filter((ec) => ec.status === Status.ACTIVE)
+                        .map(async (ec) => {
+                            return {
+                                organizationId: (await ec.organization)!
+                                    .organization_id,
+                                name: ec.name!,
+                            }
+                        })
+                )
+
+                const input: CreateCategoryInput[] = [
+                    ...expectedPairs.map((ep) => {
+                        return {
+                            organizationId: ep.organizationId,
+                            name: ep.name,
+                            subcategoryIds: subcategoriesToAdd.map((s) => s.id),
+                        }
+                    }),
+                    ...generateInput(1, org1, true),
+                ]
+
+                const entityMaps = await createCategories.generateEntityMaps(
+                    input
+                )
+
+                expect(
+                    Array.from(entityMaps.conflictingNames.keys())
+                ).to.deep.equalInAnyOrder(expectedPairs)
             })
         })
 
@@ -507,6 +577,49 @@ describe('category', () => {
                 }
             )
 
+            context(
+                'when user tries to create categories adding subcategories that does not exist for the same organization as the given in organizationId',
+                () => {
+                    let nonBelongingSubcategory: Subcategory
+
+                    beforeEach(async () => {
+                        nonBelongingSubcategory = await createSubcategory(
+                            org2
+                        ).save()
+                    })
+
+                    it('throws an ErrorCollection', async () => {
+                        const input = generateInput(3, org1, true)
+                        input[0].subcategoryIds?.push(
+                            nonBelongingSubcategory.id
+                        )
+
+                        const expectedErrors = [
+                            createEntityAPIError(
+                                'nonExistentChild',
+                                0,
+                                'Subcategory',
+                                nonBelongingSubcategory.id,
+                                'Organization',
+                                org1.organization_id
+                            ),
+                        ]
+
+                        const operation = createCategoriesFromResolver(
+                            admin,
+                            input
+                        )
+
+                        await expectAPIErrorCollection(
+                            operation,
+                            new APIErrorCollection(expectedErrors)
+                        )
+
+                        await expectCategories(0)
+                    })
+                }
+            )
+
             context('when the categories to create are duplicated', () => {
                 it('throws an ErrorCollection', async () => {
                     const input = [
@@ -524,6 +637,89 @@ describe('category', () => {
                                 'CreateCategoryInput'
                             )
                     )
+
+                    const operation = createCategoriesFromResolver(admin, input)
+                    await expectAPIErrorCollection(
+                        operation,
+                        new APIErrorCollection(expectedErrors)
+                    )
+
+                    await expectCategories(0)
+                })
+            })
+
+            context('when subcategoryIds is empty', () => {
+                it('throws an ErrorCollection', async () => {
+                    const input = generateInput(3, org1, true)
+                    input[0].subcategoryIds = []
+
+                    const expectedErrors = [
+                        createInputLengthAPIError(
+                            'CreateCategoryInput',
+                            'min',
+                            'subcategoryIds',
+                            0
+                        ),
+                    ]
+
+                    const operation = createCategoriesFromResolver(admin, input)
+                    await expectAPIErrorCollection(
+                        operation,
+                        new APIErrorCollection(expectedErrors)
+                    )
+
+                    await expectCategories(0)
+                })
+            })
+
+            context(
+                `when subcategoryIds is greater than ${config.limits.MUTATION_MAX_INPUT_ARRAY_SIZE}`,
+                () => {
+                    it('throws an ErrorCollection', async () => {
+                        const input = generateInput(3, org1, true)
+                        input[0].subcategoryIds = Array.from(
+                            new Array(
+                                config.limits.MUTATION_MAX_INPUT_ARRAY_SIZE + 1
+                            ),
+                            () => uuidv4()
+                        )
+
+                        const expectedErrors = [
+                            createInputLengthAPIError(
+                                'CreateCategoryInput',
+                                'max',
+                                'subcategoryIds',
+                                0
+                            ),
+                        ]
+
+                        const operation = createCategoriesFromResolver(
+                            admin,
+                            input
+                        )
+                        await expectAPIErrorCollection(
+                            operation,
+                            new APIErrorCollection(expectedErrors)
+                        )
+
+                        await expectCategories(0)
+                    })
+                }
+            )
+
+            context('when subcategoryIds has duplicated elements', () => {
+                it('throws an ErrorCollection', async () => {
+                    const input = generateInput(3, org1, true)
+                    const idToRepeat = input[0].subcategoryIds![0]
+                    input[0].subcategoryIds = [idToRepeat, idToRepeat]
+
+                    const expectedErrors = [
+                        createDuplicateAttributeAPIError(
+                            0,
+                            ['subcategoryIds'],
+                            'CreateCategoryInput'
+                        ),
+                    ]
 
                     const operation = createCategoriesFromResolver(admin, input)
                     await expectAPIErrorCollection(

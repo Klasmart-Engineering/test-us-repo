@@ -45,24 +45,28 @@ export type SystemEntityAndOrg = SystemEntities & {
  */
 export function validateSubItemsInOrg<T extends SystemEntityAndOrg>(
     subItemClass: new () => T,
+    subItemIds: string[],
     index: number,
     map: Map<string, T>,
     organizationId?: string
 ) {
-    return Array.from(map.values())
-        .filter((si) => {
-            const isSystem = si.system
-            const isInOrg =
-                si.__organization__?.organization_id === organizationId
+    return Array.from(subItemIds)
+        .filter((id) => {
+            const subItem = map.get(id)
 
-            return !isSystem && !isInOrg
+            if (subItem) {
+                const isSystem = subItem.system
+                const isInOrg =
+                    subItem.__organization__?.organization_id === organizationId
+                return !isSystem && !isInOrg
+            }
         })
-        .map((si) =>
+        .map((id) =>
             createEntityAPIError(
                 'nonExistentChild',
                 index,
                 subItemClass.name,
-                si.id,
+                id,
                 'Organization',
                 organizationId
             )
