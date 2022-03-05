@@ -523,6 +523,7 @@ describe('inputValidation', () => {
         let connection: TestConnection
         let organization: Organization
         let subItemsMap: Map<string, AgeRange>
+        let subItems: AgeRange[]
         const subItemsCount = 5
         const index = 0
 
@@ -540,7 +541,7 @@ describe('inputValidation', () => {
 
         context('when the sub items are system', () => {
             beforeEach(async () => {
-                const subItems = await AgeRange.save(
+                subItems = await AgeRange.save(
                     createAgeRanges(
                         subItemsCount,
                         undefined,
@@ -559,6 +560,7 @@ describe('inputValidation', () => {
             it('should return an errors empty array', () => {
                 const errors = validateSubItemsInOrg(
                     AgeRange,
+                    subItems.map((s) => s.id),
                     index,
                     subItemsMap,
                     organization.organization_id
@@ -573,7 +575,7 @@ describe('inputValidation', () => {
                 'and those sub items belong to the organization specified',
                 () => {
                     beforeEach(async () => {
-                        const subItems = await AgeRange.save(
+                        subItems = await AgeRange.save(
                             createAgeRanges(subItemsCount, organization)
                         )
 
@@ -586,6 +588,7 @@ describe('inputValidation', () => {
                     it('should return an errors empty array', () => {
                         const errors = validateSubItemsInOrg(
                             AgeRange,
+                            subItems.map((s) => s.id),
                             index,
                             subItemsMap,
                             organization.organization_id
@@ -601,7 +604,7 @@ describe('inputValidation', () => {
                 () => {
                     beforeEach(async () => {
                         const anotherOrg = await createOrganization().save()
-                        const subItems = await AgeRange.save(
+                        subItems = await AgeRange.save(
                             createAgeRanges(subItemsCount, anotherOrg)
                         )
 
@@ -614,6 +617,7 @@ describe('inputValidation', () => {
                     it('should return an errors filled array', () => {
                         const errors = validateSubItemsInOrg(
                             AgeRange,
+                            subItems.map((s) => s.id),
                             index,
                             subItemsMap,
                             organization.organization_id
