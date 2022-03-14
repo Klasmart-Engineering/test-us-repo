@@ -6,7 +6,7 @@ Welcome to the admin service (formerly user service)!
 - Questions? Head over to [#ask-user-service](https://app.slack.com/client/T02SSP0AM/C02LP6QAQGZ) on Slack.
 
 <br>
-
+ 
 ## Installation
 
 Install postgres: 
