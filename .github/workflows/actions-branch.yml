@@ -58,6 +58,17 @@ jobs:
           npm run commitlint-check -- --from=HEAD
       - name: "Unit tests"
         run: npm run coverage:unit
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v2
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          directory: ./coverage_unit/
+          fail_ci_if_error: true
+          #files: ./coverage1.xml,./coverage2.xml
+          flags: unittests
+          name: codecov-umbrella
+          path_to_write_report: ./coverage/codecov_report.txt
+          verbose: true
       - name: "Migration tests"
         run: npm run coverage:migrations
       - name: "Integration tests"
