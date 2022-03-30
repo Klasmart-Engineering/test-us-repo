@@ -1,15 +1,9 @@
-# Lines starting with '#' are comments.
+# This is a comment.
 # Each line is a file pattern followed by one or more owners.
 
-# More details are here: https://help.github.com/articles/about-codeowners/
+# These owners will be the default owners for everything in
+# the repo. Unless a later match takes precedence,
+# @global-owner1 and @global-owner2 will be requested for
+# review when someone opens a pull request.
 
-# The '*' pattern is global ownersss.
-
-# Order is important. The last matching pattern has the most precedence.
-# The folder are ordered as follows:
-
-# In each subsection folders are ordered first by depth, then alphabetically.
-# This should make it easy to add new rules without breaking existing ones.
-
-# Global rule:
 *           @KL-Engineering/identity-access-management-iam
