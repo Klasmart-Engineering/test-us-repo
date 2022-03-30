@@ -58,7 +58,7 @@ jobs:
           npm run commitlint-check -- --from=HEAD
       - name: "Unit tests"
         run: npm run coverage:unit
-      - name: Upload coverage to Codecov
+      - name: Upload unit test coverage to Codecov
         uses: codecov/codecov-action@v2
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
@@ -67,12 +67,34 @@ jobs:
           #files: ./coverage1.xml,./coverage2.xml
           flags: unittests
           name: codecov-umbrella
-          path_to_write_report: ./coverage/codecov_report.txt
+          path_to_write_report: ./coverage/codecov_report_unit.txt
           verbose: true
       - name: "Migration tests"
         run: npm run coverage:migrations
+      - name: Upload migration test coverage to Codecov
+        uses: codecov/codecov-action@v2
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          directory: ./coverage_migrations/
+          fail_ci_if_error: true
+          #files: ./coverage1.xml,./coverage2.xml
+          flags: migrationtests
+          name: codecov-umbrella
+          path_to_write_report: ./coverage/codecov_report_mig.txt
+          verbose: true
       - name: "Integration tests"
         run: npm run coverage:integration
+      - name: Upload migration test coverage to Codecov
+        uses: codecov/codecov-action@v2
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          directory: ./coverage_integration/
+          fail_ci_if_error: true
+          #files: ./coverage1.xml,./coverage2.xml
+          flags: integrationtests
+          name: codecov-umbrella
+          path_to_write_report: ./coverage/codecov_report_int.txt
+          verbose: true
       - name: "Acceptance tests"
         run: |
           curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
