@@ -67,7 +67,6 @@ jobs:
           files: ./coverage_unit/lcov.info
           flags: unittests
           name: codecov-umbrella
-          path_to_write_report: ./coverage/codecov_report_unit.txt
           verbose: true
       - name: "Migration tests"
         run: npm run coverage:migrations
@@ -77,10 +76,9 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           directory: ./coverage_migrations/
           fail_ci_if_error: true
-          files: ./lcov.info
+          files: ./coverage_migrations/lcov.info
           flags: migrationtests
           name: codecov-umbrella
-          path_to_write_report: ./coverage/codecov_report_migration.txt
           verbose: true
       - name: "Integration tests"
         run: npm run coverage:integration
@@ -90,10 +88,9 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           directory: ./coverage_integration/
           fail_ci_if_error: true
-          files: ./lcov.info
+          files: ./coverage_integration/lcov.info
           flags: integrationtests
           name: codecov-umbrella
-          path_to_write_report: ./coverage/codecov_report_integration.txt
           verbose: true
       - name: "Acceptance tests"
         run: |
@@ -120,8 +117,7 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           directory: ./coverage_acceptance/
           fail_ci_if_error: true
-          files: ./lcov.info
+          files: ./coverage_acceptance/lcov.info
           flags: acceptancetests
           name: codecov-umbrella
-          path_to_write_report: ./coverage/codecov_report_acceptance.txt
           verbose: true
