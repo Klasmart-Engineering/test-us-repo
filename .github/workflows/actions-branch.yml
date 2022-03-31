@@ -64,7 +64,7 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           directory: ./coverage_unit/
           fail_ci_if_error: true
-          files: ./lcov.info
+          files: ./coverage_unit/lcov.info
           flags: unittests
           name: codecov-umbrella
           path_to_write_report: ./coverage/codecov_report_unit.txt
