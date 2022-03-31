@@ -64,7 +64,7 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           directory: ./coverage_unit/
           fail_ci_if_error: true
-          #files: ./coverage1.xml,./coverage2.xml
+          files: ./lcov.info
           flags: unittests
           name: codecov-umbrella
           path_to_write_report: ./coverage/codecov_report_unit.txt
@@ -77,23 +77,23 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           directory: ./coverage_migrations/
           fail_ci_if_error: true
-          #files: ./coverage1.xml,./coverage2.xml
+          files: ./lcov.info
           flags: migrationtests
           name: codecov-umbrella
-          path_to_write_report: ./coverage/codecov_report_mig.txt
+          path_to_write_report: ./coverage/codecov_report_migration.txt
           verbose: true
       - name: "Integration tests"
         run: npm run coverage:integration
-      - name: Upload migration test coverage to Codecov
+      - name: Upload integration test coverage to Codecov
         uses: codecov/codecov-action@v2
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           directory: ./coverage_integration/
           fail_ci_if_error: true
-          #files: ./coverage1.xml,./coverage2.xml
+          files: ./lcov.info
           flags: integrationtests
           name: codecov-umbrella
-          path_to_write_report: ./coverage/codecov_report_int.txt
+          path_to_write_report: ./coverage/codecov_report_integration.txt
           verbose: true
       - name: "Acceptance tests"
         run: |
@@ -114,3 +114,14 @@ jobs:
       
           docker stop -t 2 user-service
           npx nyc report --require ts-node/register --reporter=lcov --reporter=json-summary --reporter=text-summary --report-dir ./coverage_acceptance
+      - name: Upload acceptance test coverage to Codecov
+        uses: codecov/codecov-action@v2
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          directory: ./coverage_acceptance/
+          fail_ci_if_error: true
+          files: ./lcov.info
+          flags: acceptancetests
+          name: codecov-umbrella
+          path_to_write_report: ./coverage/codecov_report_acceptance.txt
+          verbose: true
