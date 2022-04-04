@@ -50,6 +50,13 @@ jobs:
         run: npm ci
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NODE_AUTH_PAT }}
+      - name: plantuml
+        uses: grassedge/generate-plantuml-action@v1.5
+        with:
+          path: ./dbschema.png
+          message: "Render PlantUML files"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: "Static checks"
         if: github.ref == 'refs/heads/main'
         run: |
