@@ -59,7 +59,7 @@ jobs:
       - name: Push Local Changes
         uses: stefanzweifel/git-auto-commit-action@v4.1.2
         with:
-          commit_message: "Generate PNG files for PlantUML diagrams"
+          commit_message: "feat(AD-2039): png files for plantuml diagrams"
           branch: ${{ github.github_ref_name }}
       - name: "Static checks"
         if: github.ref == 'refs/heads/main'
