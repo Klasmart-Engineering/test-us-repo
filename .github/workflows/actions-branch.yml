@@ -50,11 +50,10 @@ jobs:
         run: npm ci
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NODE_AUTH_PAT }}
-      - name: plantuml
-        uses: grassedge/generate-plantuml-action@v1.5
+      - name: Generate SVG Diagrams
+        uses: holowinski/plantuml-github-action@main
         with:
-          path: ./dbschema.png
-          message: "Render PlantUML files"
+          args: -v -tsvg documents/*.plantuml
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: "Static checks"
