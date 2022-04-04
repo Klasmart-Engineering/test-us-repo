@@ -56,6 +56,11 @@ jobs:
           args: -v -tsvg documents/*.plantuml
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Push Local Changes
+        uses: stefanzweifel/git-auto-commit-action@v4.1.2
+        with:
+          commit_message: "Generate PNG files for PlantUML diagrams"
+          branch: ${GITHUB_REF_NAME}
       - name: "Static checks"
         if: github.ref == 'refs/heads/main'
         run: |
