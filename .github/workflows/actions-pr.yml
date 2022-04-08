@@ -2,8 +2,6 @@ name: CI Pipeline for PRs
 
 on:
   push:
-    paths:
-      - "**.plantuml"
     branches-ignore:
       - "**"
   pull_request:
@@ -61,4 +59,4 @@ jobs:
         uses: stefanzweifel/git-auto-commit-action@v4.1.2
         with:
           commit_message: "chore: svg files for plantuml diagrams"
-          branch: ${{ github.head_ref }}
+          branch: ${GITHUB_HEAD_REF}
