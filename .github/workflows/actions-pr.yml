@@ -7,7 +7,6 @@ on:
       - "**"
   pull_request_target:
 
-
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
@@ -56,4 +55,4 @@ jobs:
         uses: stefanzweifel/git-auto-commit-action@v4.1.2
         with:
           commit_message: "chore: svg files for plantuml diagrams"
-          branch: ${GITHUB_HEAD_REF}
+          branch: ${{github.head_ref}}
