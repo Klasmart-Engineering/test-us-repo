@@ -61,4 +61,4 @@ jobs:
         uses: stefanzweifel/git-auto-commit-action@v4.1.2
         with:
           commit_message: "chore: svg files for plantuml diagrams"
-          branch: ${{ github.github_head_ref }}
+          branch: ${{ github.head_ref }}
