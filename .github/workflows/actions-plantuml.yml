@@ -15,10 +15,6 @@ jobs:
       - name: Generate SVG Diagrams
         uses: holowinski/plantuml-github-action@main
         with:
-          args: -v -tsvg diagrams/*.puml
-      - name: Generate SVG Diagrams
-        uses: holowinski/plantuml-github-action@main
-        with:
           args: -v -tsvg documents/*.plantuml
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
