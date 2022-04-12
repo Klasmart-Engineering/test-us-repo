@@ -8,6 +8,7 @@ jobs:
   plantuml:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v2
       - name: Generate SVG Diagrams
         uses: holowinski/plantuml-github-action@main
         with:
