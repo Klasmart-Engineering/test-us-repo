@@ -4,10 +4,14 @@ on:
     paths:
       - "**.plantuml"
 
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
 jobs:
   plantuml:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v2
       - name: Generate SVG Diagrams
         uses: holowinski/plantuml-github-action@main
         with:
