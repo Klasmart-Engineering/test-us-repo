@@ -15,19 +15,6 @@ jobs:
       - name: Generate SVG Diagrams
         uses: holowinski/plantuml-github-action@main
         with:
-          args: -v -tsvg documents/*.plantuml
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Push Local Changes
-        uses: stefanzweifel/git-auto-commit-action@v4.1.2
-        with:
-          commit_message: "chore: png files for plantuml diagrams"
-          branch: ${{ github.github_ref_name }}
-      - name: Checkout Source
-        uses: actions/checkout@v2
-      - name: Generate SVG Diagrams
-        uses: holowinski/plantuml-github-action@main
-        with:
           args: -v -tsvg diagrams/*.puml
       - name: Generate SVG Diagrams
         uses: holowinski/plantuml-github-action@main
