@@ -11,6 +11,7 @@ COPY src src
 COPY views views
 RUN npm run build
 
+
 FROM base as release
 COPY --from=build /usr/src/app/dist/ .
 COPY ./newrelic.js .
